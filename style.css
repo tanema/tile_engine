@@ -1,0 +1,12 @@
+canvas#main_canvas{
+   border: 1px solid black;
+}
+
+div#message{
+   width: 290px;
+   height: 250px;
+   overflow-x: hidden;
+   overflow-y: auto;
+   background-color: #000;
+   color: #fff;
+}
