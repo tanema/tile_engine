@@ -1,0 +1,1 @@
+This is part of a bigger project I am working on.Also this a a working version from what I learn from http://www.johnegraham2.com/web-technology/javascript-2d-tile-engine-canvas-helper-objects/and implemented a dynamic viewport. If this is helpful I would like to know! please send me any comments or critisisms.
