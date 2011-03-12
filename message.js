@@ -30,15 +30,13 @@ var FPS = {
 };
 
 var Tracker = {
-	x: 0, //hold element to display fps
-	y: 0, //hold frame count
 	tracker: 0,
 	init: function(element){
 		Tracker.tracker = element;
 	},
 	updateTracker: function(x,y){ 
 		if(Tracker.tracker){
-			Tracker.tracker.innerHTML = "x: " + x + " y: " + y+ "</br>";
+			Tracker.tracker.innerHTML = "Coordinates</br>x: " + x + "</br>y: " + y+ "</br>";
 		}
 	}
 };

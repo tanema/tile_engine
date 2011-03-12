@@ -1,5 +1,45 @@
-/*All code copyright 2010 by John Graham unless otherwise attributed*/
+/*copyright 2010 by John Graham*/
 
+function newMouse(){
+	var Mouse = {
+			contex: 0,down: false,offsetx: 0,offsety: 0,timer: 0,accelx: 0,accely: 0,
+			clickposx: 0,clickposy: 0,tileEngine:0,
+			init: function(context, tileEngine) {
+					Mouse.context = context || window
+					Mouse.tileEngine = tileEngine;
+					$(Mouse.context).mousedown(function(event)  {Mouse.setClickPos(event)});
+					$(Mouse.context).mouseup(function()  {Mouse.down = false;});
+					$(Mouse.context).mouseout(function() {Mouse.down = false;});
+					$(Mouse.context).mousemove(function(event) {Mouse.move(event);});
+			},
+			isDown: function() {return Mouse.down;},
+			setClickPos: function(event) { 
+				Mouse.clickposx = event.screenX;
+				Mouse.clickposy = event.screenY;
+				Mouse.down = true;
+			},
+			move: function(event) {
+					if (Mouse.isDown()) {
+							Mouse.timer++;
+							Mouse.offsetx = event.screenX - Mouse.clickposx;
+							Mouse.offsety = event.screenY - Mouse.clickposy;
+							Mouse.setClickPos(event);
+							Mouse.accelx = Mouse.offsetx / Mouse.timer;
+							Mouse.accely = Mouse.offsety / Mouse.timer;
+					} else {
+							Mouse.reset();
+					}
+			},
+			reset: function() {
+					Mouse.offsetx = 0;
+					Mouse.offsety = 0;
+					Mouse.accelx = 0;
+					Mouse.accely = 0;
+					Mouse.timer = 0;
+			}
+	};
+	return Mouse;
+}
 function newSourceImage(){ //image used to create tile 
 	var SourceImage = {
 		imageFilename: 0, //filename for image
@@ -173,20 +213,14 @@ function newTileEngine(){
 		sourceTileCounts: 0,
 		sourceTileAccross: 0,
 		tilesArray: 0,
-		clickposx: 0,
-		clickposy: 0,
-		scrollstartx: 0,
-		scrollstarty: 0,
-		ismousedown: false,
+		mouse: 0,
+		windowVelocityx: 0,
+		windowVelocityy: 0,
 		timeofDay: 0.2,
 		
 		init: function(){ //initialize experiment
-			TileEngine.canvas.addEventListener('mousedown', TileEngine.setClickPos, false);
-			TileEngine.canvas.addEventListener('mousemove', TileEngine.moveTarget, false);
-			TileEngine.canvas.addEventListener('mouseup',   TileEngine.mouseup, false);
-			TileEngine.canvas.addEventListener('mouseout',   TileEngine.mouseup, false);
-			TileEngine.scrollstartx = TileEngine.x;
-			TileEngine.scrollstarty = TileEngine.y;
+			TileEngine.mouse = newMouse();
+			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
 			TileEngine.sources = new Array();
 			TileEngine.loadSource();
 			TileEngine.sources[0].image.onload = function(){  //event handler for image load 
@@ -227,8 +261,7 @@ function newTileEngine(){
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
 			if(TileEngine.zones){
-				var zonesnum = 0;
-				var zonestring = "";
+				TileEngine.updateMouse();
 				//draw Base Map
 				for(var i = 0, ii = TileEngine.zones.length; i < ii; i++){
 					var check_zone = TileEngine.zones[i];
@@ -237,11 +270,9 @@ function newTileEngine(){
 						continue;//if it's outside, loop again	
 					}
 					else{
-						zonesnum++;
 						TileEngine.zones[i].drawTiles(TileEngine.x, TileEngine.y,TileEngine.width, TileEngine.height);
 						TileEngine.ctx.drawImage(TileEngine.zones[i].canvas, TileEngine.zones[i].x-TileEngine.x, TileEngine.zones[i].y-TileEngine.y);
 					}
-					zonestring += "(" + check_zone.x + "," + check_zone.y + "):[" + check_zone.width + "/" + check_zone.height + "]</br>";
 				}
 				//Draw Sprites
 				//TileEngine.ctx.drawImage(TileEngine.tileSource[15].canvas, 32-TileEngine.x, 32-TileEngine.y); 
@@ -332,23 +363,26 @@ function newTileEngine(){
 				TileEngine.zones[j].arrangeTiles(); //go throughh and arange x and y positions of tiles in zones
 			}
 		},
-		setClickPos: function(event, target) { 
-			TileEngine.clickposx = event.screenX;
-			TileEngine.clickposy = event.screenY;
-			TileEngine.scrollstartx = TileEngine.x;
-			TileEngine.scrollstarty = TileEngine.y;
-			TileEngine.ismousedown = true;
-		},
-		moveTarget: function(event, target) {
-			if (TileEngine.ismousedown == true) {
-				var difx = event.screenX - TileEngine.clickposx;
-				var dify = event.screenY - TileEngine.clickposy;
-				TileEngine.x = TileEngine.scrollstartx - difx;
-				TileEngine.y = TileEngine.scrollstarty - dify;
+		updateMouse: function(){
+			TileEngine.windowVelocityx = (TileEngine.windowVelocityx + (TileEngine.mouse.accelx / 10)) * 0.96;
+			TileEngine.windowVelocityy = (TileEngine.windowVelocityy + (TileEngine.mouse.accely / 10)) * 0.96;
+			TileEngine.x -= TileEngine.windowVelocityx;
+			TileEngine.y -= TileEngine.windowVelocityy;
+			//pull back if its off screen
+			/*if(TileEngine.x < 0 && !TileEngine.mouse.isDown()) {
+				TileEngine.windowVelocityx -= 0.1;
 			}
-		},
-		mouseup : function(event, target) {
-			TileEngine.ismousedown = false;
+			if(TileEngine.y < 0 && !TileEngine.mouse.isDown()) {
+				TileEngine.windowVelocityy -= 0.1;
+			}
+			if((TileEngine.x+TileEngine.width) > (TileEngine.tilesWide*TileEngine.tileWidth)) {
+				this._windowVelocity += 0.1;
+			}
+			if((TileEngine.y+TileEngine.height) > (TileEngine.tilesHigh*TileEngine.tileHeight)) {
+				this._windowVelocity += 0.1;
+			}*/
+			
+			TileEngine.mouse.reset();
 		}
 	}
 	return TileEngine;
