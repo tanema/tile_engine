@@ -216,6 +216,7 @@ function newTileEngine(){
 		mouse: 0,
 		windowVelocityx: 0,
 		windowVelocityy: 0,
+		renderCircular: false,
 		timeofDay: 0.2,
 		
 		init: function(){ //initialize experiment
@@ -249,14 +250,19 @@ function newTileEngine(){
 			TileEngine.sourceFiles = obj.sourceFiles;
 			TileEngine.sourceTileCounts = obj.sourceTileCounts;
 			TileEngine.sourceTileAccross = obj.sourceTileAccross;
-			TileEngine.tileOffsetX = obj.tileOffestX;
-			TileEngine.tileOffsetY = obj.tileOffsetY;
 			TileEngine.tilesArray = obj.tilesArray;
+			TileEngine.renderCircular |= obj.renderCircular;
 		},
 		loadSource: function(){ //create and initialize image source
 			var source = newSourceImage();  
 			source.init(TileEngine.sourceFiles);
 			TileEngine.sources.push(source);
+		},
+		getX: function(){
+			return TileEngine.renderCircular ? TileEngine.x%(TileEngine.tilesWide*TileEngine.tileWidth):TileEngine.x
+		},
+		getY: function(){
+			return TileEngine.renderCircular ? TileEngine.y%(TileEngine.tilesHigh*TileEngine.tileHeight):TileEngine.y
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
@@ -266,16 +272,16 @@ function newTileEngine(){
 				for(var i = 0, ii = TileEngine.zones.length; i < ii; i++){
 					var check_zone = TileEngine.zones[i];
 					//check to see if each zone is outside the viewport
-					if((check_zone.x >= (TileEngine.x+TileEngine.width) || check_zone.y >= (TileEngine.y+TileEngine.height))||((check_zone.x + check_zone.width) < TileEngine.x || (check_zone.y + check_zone.height < TileEngine.y))){ //only draw zones that are in the viewport
+					if((check_zone.x >= (TileEngine.getX()+TileEngine.width) || check_zone.y >= (TileEngine.getY()+TileEngine.height))||((check_zone.x + check_zone.width) < TileEngine.getX() || (check_zone.y + check_zone.height < TileEngine.getY()))){ //only draw zones that are in the viewport
 						continue;//if it's outside, loop again	
 					}
 					else{
-						TileEngine.zones[i].drawTiles(TileEngine.x, TileEngine.y,TileEngine.width, TileEngine.height);
-						TileEngine.ctx.drawImage(TileEngine.zones[i].canvas, TileEngine.zones[i].x-TileEngine.x, TileEngine.zones[i].y-TileEngine.y);
+						TileEngine.zones[i].drawTiles(TileEngine.getX(), TileEngine.getY(),TileEngine.width, TileEngine.height);
+						TileEngine.ctx.drawImage(TileEngine.zones[i].canvas, TileEngine.zones[i].x-TileEngine.getX(), TileEngine.zones[i].y-TileEngine.getY());
 					}
 				}
 				//Draw Sprites
-				//TileEngine.ctx.drawImage(TileEngine.tileSource[15].canvas, 32-TileEngine.x, 32-TileEngine.y); 
+				//TileEngine.ctx.drawImage(TileEngine.tileSource[15].canvas, 32-TileEngine.getX(), 32-TileEngine.getY()); 
 				//Draw Decorations
 				//Draw Weather
 				TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
@@ -368,21 +374,22 @@ function newTileEngine(){
 			TileEngine.windowVelocityy = (TileEngine.windowVelocityy + (TileEngine.mouse.accely / 10)) * 0.96;
 			TileEngine.x -= TileEngine.windowVelocityx;
 			TileEngine.y -= TileEngine.windowVelocityy;
-			//pull back if its off screen
-			/*if(TileEngine.x < 0 && !TileEngine.mouse.isDown()) {
-				TileEngine.windowVelocityx -= 0.1;
+			if(!TileEngine.renderCircular){
+				if(TileEngine.x < 0 && !TileEngine.mouse.isDown()) {
+					TileEngine.windowVelocityx -= 0.1;
+				}
+				if(TileEngine.y < 0 && !TileEngine.mouse.isDown()) {
+					TileEngine.windowVelocityy -= 0.1;
+				}
+				if((TileEngine.x+TileEngine.width) > (TileEngine.tilesWide*TileEngine.tileWidth)) {
+					this.windowVelocityx += 0.1;
+				}
+				if((TileEngine.y+TileEngine.height) > (TileEngine.tilesHigh*TileEngine.tileHeight)) {
+					this.windowVelocityy += 0.1;
+				}
 			}
-			if(TileEngine.y < 0 && !TileEngine.mouse.isDown()) {
-				TileEngine.windowVelocityy -= 0.1;
-			}
-			if((TileEngine.x+TileEngine.width) > (TileEngine.tilesWide*TileEngine.tileWidth)) {
-				this._windowVelocity += 0.1;
-			}
-			if((TileEngine.y+TileEngine.height) > (TileEngine.tilesHigh*TileEngine.tileHeight)) {
-				this._windowVelocity += 0.1;
-			}*/
-			
 			TileEngine.mouse.reset();
+			document.getElementById('message').innerHTML = TileEngine.tilesHigh*TileEngine.tileHeight;
 		}
 	}
 	return TileEngine;

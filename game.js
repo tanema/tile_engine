@@ -87,10 +87,12 @@ var Game = {
 		obj.tileWidth = 32;
 		obj.tileHeight = 32;
 		obj.tilesWide = 9;
-		obj.tilesHigh = 900;
+		obj.tilesHigh = 36;
 		
 		obj.zoneTilesWide = 3;
 		obj.zoneTilesHigh = 3;
+		
+		obj.renderCircular = false;
 		
 		obj.sourceFiles = 'tiles.png';
 		obj.sourceTileCounts = 254;
