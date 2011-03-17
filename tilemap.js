@@ -207,6 +207,8 @@ function newTileEngine(){
 		tilesWide: 0, //width in tiles of entire map
 		tileWidth: 0, //width in pixels single tile
 		tileHeight: 0, //height in pixels of single tile
+		mapWidth: 0,
+		mapHeight: 0,
 		sprites: 0,
 		main_sprite: 0,
 		sourceFiles: 0,
@@ -218,7 +220,16 @@ function newTileEngine(){
 		windowVelocityy: 0,
 		renderCircular: false,
 		timeofDay: 0.2,
-		
+		view : {
+			x:0,y:0,viewWidth:0,viewHeight:0,
+			update : function(){
+				TileEngine.view.x = TileEngine.getX();
+				TileEngine.view.y = TileEngine.getY();
+				TileEngine.view.viewWidth = TileEngine.getX()+TileEngine.width;
+				TileEngine.view.viewHeight = TileEngine.getY()+TileEngine.height;
+				return TileEngine.view;
+			}
+		},
 		init: function(){ //initialize experiment
 			TileEngine.mouse = newMouse();
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
@@ -232,7 +243,8 @@ function newTileEngine(){
 			TileEngine.tiles = new Array();
 			TileEngine.zones = new Array();
 			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
-			
+			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
+			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
 		},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
@@ -259,27 +271,48 @@ function newTileEngine(){
 			TileEngine.sources.push(source);
 		},
 		getX: function(){
-			return TileEngine.renderCircular ? TileEngine.x%(TileEngine.tilesWide*TileEngine.tileWidth):TileEngine.x
+			return TileEngine.renderCircular ? TileEngine.x%TileEngine.mapWidth:TileEngine.x
 		},
 		getY: function(){
-			return TileEngine.renderCircular ? TileEngine.y%(TileEngine.tilesHigh*TileEngine.tileHeight):TileEngine.y
+			return TileEngine.renderCircular ? TileEngine.y%TileEngine.mapHeight:TileEngine.y
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
+			TileEngine.updateMouse();
 			if(TileEngine.zones){
-				TileEngine.updateMouse();
+				var zonenum = 0, view = TileEngine.view.update()
 				//draw Base Map
 				for(var i = 0, ii = TileEngine.zones.length; i < ii; i++){
 					var check_zone = TileEngine.zones[i];
 					//check to see if each zone is outside the viewport
-					if((check_zone.x >= (TileEngine.getX()+TileEngine.width) || check_zone.y >= (TileEngine.getY()+TileEngine.height))||((check_zone.x + check_zone.width) < TileEngine.getX() || (check_zone.y + check_zone.height < TileEngine.getY()))){ //only draw zones that are in the viewport
-						continue;//if it's outside, loop again	
-					}
-					else{
-						TileEngine.zones[i].drawTiles(TileEngine.getX(), TileEngine.getY(),TileEngine.width, TileEngine.height);
-						TileEngine.ctx.drawImage(TileEngine.zones[i].canvas, TileEngine.zones[i].x-TileEngine.getX(), TileEngine.zones[i].y-TileEngine.getY());
-					}
+					if(TileEngine.renderCircular){
+						for(var j=-TileEngine.mapHeight+check_zone.y,jj=view.y; j>=jj; j-=TileEngine.mapHeight){
+							for(var h=-TileEngine.mapWidth+check_zone.x,hh=view.x; h>=hh;h-=TileEngine.mapWidth){
+								check_zone.drawTiles(h, j,TileEngine.width, TileEngine.height);
+								TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-h, check_zone.y-j);
+							}
+							for(var h=check_zone.x,hh=view.viewWidth; h<=hh;h+=TileEngine.mapWidth){
+								check_zone.drawTiles(h, j,TileEngine.width, TileEngine.height);
+								TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-h, check_zone.y-j);
+							}
+						}
+						for(var j=check_zone.y,jj=view.viewHeight; j<=jj; j+=TileEngine.mapHeight){
+							for(var h=-TileEngine.mapWidth+check_zone.x,hh=view.x; h>=hh;h-=TileEngine.mapWidth){
+								check_zone.drawTiles(h, j,TileEngine.width, TileEngine.height);
+								TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-h, check_zone.y-j);
+							}
+							for(var h=check_zone.x,hh=view.viewWidth; h<=hh;h+=TileEngine.mapWidth){
+								check_zone.drawTiles(h, j,TileEngine.width, TileEngine.height);
+								TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-h, check_zone.y-j);
+							}
+						}
+					}else if(TileEngine.isInView(check_zone, view)){
+						zonenum++;
+						check_zone.drawTiles(view.x, view.y,TileEngine.width, TileEngine.height);
+						TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
+					} 
 				}
+				document.getElementById('zones').innerHTML = "Zones Rendered: " + zonenum;
 				//Draw Sprites
 				//TileEngine.ctx.drawImage(TileEngine.tileSource[15].canvas, 32-TileEngine.getX(), 32-TileEngine.getY()); 
 				//Draw Decorations
@@ -287,6 +320,9 @@ function newTileEngine(){
 				TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
 				TileEngine.ctx.fillRect(0,0,TileEngine.width, TileEngine.height);
 			}
+		},
+		isInView: function(check, view){
+			return (check.x+check.width > view.x && check.x <= view.viewWidth)&&(check.y+check.height > view.y && check.y <= view.viewHeight)
 		},
 		createTileSource: function(count, accross){ //create tiles sources
 			var accross_count = 0;
@@ -372,8 +408,9 @@ function newTileEngine(){
 		updateMouse: function(){
 			TileEngine.windowVelocityx = (TileEngine.windowVelocityx + (TileEngine.mouse.accelx / 10)) * 0.96;
 			TileEngine.windowVelocityy = (TileEngine.windowVelocityy + (TileEngine.mouse.accely / 10)) * 0.96;
-			TileEngine.x -= TileEngine.windowVelocityx;
-			TileEngine.y -= TileEngine.windowVelocityy;
+			TileEngine.x = TileEngine.getX() - TileEngine.windowVelocityx;
+			TileEngine.y = TileEngine.getY() - TileEngine.windowVelocityy;
+			
 			if(!TileEngine.renderCircular){
 				if(TileEngine.x < 0 && !TileEngine.mouse.isDown()) {
 					TileEngine.windowVelocityx -= 0.1;
@@ -381,15 +418,14 @@ function newTileEngine(){
 				if(TileEngine.y < 0 && !TileEngine.mouse.isDown()) {
 					TileEngine.windowVelocityy -= 0.1;
 				}
-				if((TileEngine.x+TileEngine.width) > (TileEngine.tilesWide*TileEngine.tileWidth)) {
+				if((TileEngine.x+TileEngine.width) > TileEngine.mapWidth) {
 					this.windowVelocityx += 0.1;
 				}
-				if((TileEngine.y+TileEngine.height) > (TileEngine.tilesHigh*TileEngine.tileHeight)) {
+				if((TileEngine.y+TileEngine.height) > TileEngine.mapHeight) {
 					this.windowVelocityy += 0.1;
 				}
 			}
 			TileEngine.mouse.reset();
-			document.getElementById('message').innerHTML = TileEngine.tilesHigh*TileEngine.tileHeight;
 		}
 	}
 	return TileEngine;

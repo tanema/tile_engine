@@ -7,8 +7,7 @@ var Message = { //object to create messages (using alert in a game loop will cra
 	},
 	addMessage: function(msg){ //add new message
 		if(Message.message){
-			msg = '- '+msg+'<br />';
-			Message.message.innerHTML += msg;
+			Message.message.innerHTML += '- '+msg+'<br />';
 		}
 	}
 };
