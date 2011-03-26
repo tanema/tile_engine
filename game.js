@@ -60,7 +60,7 @@ var Game = {
 	tileEngine: 0, //holds tile engine object
 	fps: 0, //target fps for game loop
 	initGame: function() { //initialize game
-		Game.fps = 2500; //set target fps to 25
+		Game.fps = 250; //set target fps to 250
 		Game.createTiles();
 		Message.addMessage("Tiles Ready");
 		Game.startTimer(); //start game loop
@@ -92,7 +92,7 @@ var Game = {
 		obj.zoneTilesWide = 3;
 		obj.zoneTilesHigh = 3;
 		
-		obj.renderCircular = false;
+		obj.renderCircular = true;
 		
 		obj.sourceFiles = 'tiles.png';
 		obj.sourceTileCounts = 254;
@@ -108,6 +108,6 @@ if(canvas_support.check_canvas()){  //check canvas support before intializing
 	Game.initGame(); //initialize game object
 }
 else {
-	Message.addMessage('Your Browser Does not support this demo!');	
+	Message.addMessage('Your Browser Does not support this app!');	
 }
 
