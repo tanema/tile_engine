@@ -73,7 +73,7 @@ var Game = {
 	runLoop: function(){ //code to run on each game loop
 		Game.tileEngine.drawFrame();
 		FPS.fps_count++;  //increments frame for fps display
-		Tracker.updateTracker(Game.tileEngine.x, Game.tileEngine.y);
+		Tracker.updateTracker(Game.tileEngine.x.toFixed(2), Game.tileEngine.y.toFixed(2));
 	},
 	createTiles: function(){ //create and initialize tile engine
 		Game.tileEngine = newTileEngine(); //create tile engine object
