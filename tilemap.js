@@ -339,14 +339,13 @@ function newTileEngine(){
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
 			TileEngine.mouse.update();
-			var view = TileEngine.view.update(),
-					views = [view,view.up().left(),view.up(),view.up().right(),view.right(),view.down().right(),view.down(),view.down().left(),	view.left()];
+			var view = TileEngine.view.update();
 			if(TileEngine.zones){
 				var i = TileEngine.zones.length;
-				while(i--){
-					var check_zone = TileEngine.zones[i];
-					if(TileEngine.renderCircular){
-						var v = views.length;
+				if(TileEngine.renderCircular){
+					var views = [view,view.up().left(),view.up(),view.up().right(),view.right(),view.down().right(),view.down(),view.down().left(),	view.left()];
+					while(i--){
+						var check_zone = TileEngine.zones[i],v = views.length;
 						while(v--){
 							var currentView = views[v]
 							if(currentView.isInView(check_zone)){
@@ -354,10 +353,15 @@ function newTileEngine(){
 								TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
 							}
 						}
-					}else if(view.isInView(check_zone, view)){
-						check_zone.drawTiles(view);
-						TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
-					} 
+					}
+				} else {
+					while(i--){
+						var check_zone = TileEngine.zones[i];
+						if(view.isInView(check_zone, view)){
+							check_zone.drawTiles(view);
+							TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
+						} 
+					}
 				}
 			}
 			//Draw Sprites
@@ -366,6 +370,24 @@ function newTileEngine(){
 			//Draw Weather
 			TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
 			TileEngine.ctx.fillRect(0,0,TileEngine.width, TileEngine.height);
+		},
+		getCurrentViews: function(view){
+			var views = [view],
+					up = view.y < 0,
+					down = view.viewHeight > TileEngine.mapHeight
+			if(view.x < 0){
+				var v = views.push(v);
+				if(up)views.push(v.up());
+				if(down)views.push(v.down());
+			}
+			if(view.viewWidth > TileEngine.mapWidth){
+				var v = views.push(v);
+				if(up)views.push(v.up());
+				if(down)views.push(v.down());
+			}
+			if(up)views.push(view.up());
+			if(down)views.push(view.down());
+			return views;
 		},
 		createTileSource: function(count, accross){ //create tiles sources
 			var accross_count = 0;
