@@ -90,7 +90,7 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 			var v = $.extend({}, this);
 			if(v.viewHeight > TileEngine.mapHeight){
 				v.y = 0
-				v.viewHeight = TileEngine.mapHeight;
+				v.viewHeight -= TileEngine.mapHeight;
 				v.yoffset = TileEngine.mapHeight;
 			}
 			return v;
@@ -108,7 +108,7 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 			var v = $.extend({}, this);
 			if(v.viewWidth > TileEngine.mapWidth){
 				v.x = 0
-				v.viewWidth = TileEngine.mapWidth;
+				v.viewWidth -= TileEngine.mapWidth;
 				v.xoffset = TileEngine.mapWidth;
 			}
 			return v;
