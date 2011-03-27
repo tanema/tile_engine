@@ -125,7 +125,7 @@ var Game = {
 		obj.zoneTilesWide = 3;
 		obj.zoneTilesHigh = 3;
 		
-		obj.renderCircular = false;
+		obj.renderCircular = true;
 		
 		obj.sourceFiles = 'tiles.png';
 		obj.sourceTileCounts = 254;
