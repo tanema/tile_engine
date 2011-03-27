@@ -165,8 +165,11 @@ function newTileSource(){ //image used to create tile
 		}
 	};
 	return TileSource;
-}
+};
 
+function getBytes(num) {
+    return [num & 0xFF, (num >> 8) & 0xFF, (num >> 16) & 0xFF];
+};
 /*** function to create and then return a new Tile object */
 function newTile(){
 	var Tile = {
@@ -176,13 +179,18 @@ function newTile(){
 		local_y:0,
 		width: 0, //width and height of this tile
 		height: 0,
-		sourceIndex: 0, //index of tile source in tile engine's source array
+		baseSourceIndex: 0, //index of tile source in tile engine's source array
+		decorationIndex: 0,
+		physicsID: 0,
 		init: function(x, y, width, height, source){ //initialize sprite
 			Tile.x = x;
 			Tile.y = y;
 			Tile.width = width;
 			Tile.height = height;
-			Tile.sourceIndex = source; // set index of tile source for this tile
+			var sourceNumbers = getBytes(source)
+			Tile.baseSourceIndex = sourceNumbers[2]; // set index of tile source for this tile
+			Tile.decorationIndex = sourceNumbers[1]; 
+			Tile.physicsID = sourceNumbers[0]; 
 		}
 	};
 	return Tile;  //returns newly created sprite object
@@ -201,9 +209,9 @@ function newZone(){
 		tileHeight: 0,
 		width: 0,
 		height: 0,
-		color: 0,
 		x: 0,
 		y: 0,
+		viewoffset: 0,
 		tiles: 0, //array of tiles in this zone
 		init: function(engine, left, top, tilesWide, tilesHigh, tileWidth, tileHeight, width, height){
 			Zone.tileEngine = engine;
@@ -220,7 +228,6 @@ function newZone(){
 			Zone.canvas.setAttribute('width', width); //set tile source canvas size
 			Zone.canvas.setAttribute('height', height);
 			Zone.tiles = new Array();
-			Zone.color = "rgba(0,0,0,0)";
 		},
 		addTile: function(tile){
 			Zone.tiles.push(tile);	
@@ -240,19 +247,33 @@ function newZone(){
 			}
 		},
 		drawTiles: function(view){
-			Zone.ctx.clearRect(0,0,Zone.width, Zone.height);//clear main canvas
+			Zone.ctx.clearRect(0,0,Zone.width, Zone.height);
 			if(Zone.tiles){
 				var i = Zone.tiles.length;
 				while(i--){
 					var check_tile = Zone.tiles[i];
-					//check to see if each tile is outside the viewport
-					if(view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.sourceIndex]){
-						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.sourceIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
+					if(view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.baseSourceIndex]){
+						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.baseSourceIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
 					}
 				}
 			}
-			Zone.ctx.fillStyle = Zone.color;    
-			Zone.ctx.fillRect(0,0,Zone.width, Zone.height);
+		},
+		forDecoration: function(view){
+			var v = $.extend({}, this);
+				v.viewoffset = view
+			return v;
+		},
+		drawDecorations: function(view){
+			Zone.ctx.clearRect(0,0,Zone.width, Zone.height);
+			if(Zone.tiles){
+				var i = Zone.tiles.length;
+				while(i--){
+					var check_tile = Zone.tiles[i];
+					if(view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.decorationIndex]){
+						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.decorationIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
+					}
+				}
+			}
 		}
 	};
 	return Zone;
@@ -341,7 +362,8 @@ function newTileEngine(){
 			TileEngine.mouse.update();
 			var view = TileEngine.view.update();
 			if(TileEngine.zones){
-				var i = TileEngine.zones.length;
+				var i = TileEngine.zones.length,
+						validZones = new Array();
 				if(TileEngine.renderCircular){
 					var views = [view,view.up().left(),view.up(),view.up().right(),view.right(),view.down().right(),view.down(),view.down().left(),	view.left()];
 					while(i--){
@@ -349,18 +371,37 @@ function newTileEngine(){
 						while(v--){
 							var currentView = views[v]
 							if(currentView.isInView(check_zone)){
+								validZones.push(check_zone.forDecoration(currentView));
 								check_zone.drawTiles(currentView);
 								TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
 							}
 						}
 					}
+					i = validZones.length;
+					while(i--){
+						var check_zone = validZones[i],
+								currentView = check_zone.viewoffset;
+						check_zone.drawDecorations(currentView);
+						TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
+					}
 				} else {
+					//base map
 					while(i--){
 						var check_zone = TileEngine.zones[i];
 						if(view.isInView(check_zone, view)){
+							validZones.push(check_zone.forDecoration(view));
 							check_zone.drawTiles(view);
 							TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
 						} 
+					}
+					
+					//decorations
+					i = validZones.length;
+					while(i--){
+						var check_zone = validZones[i],
+								currentView = check_zone.viewoffset;
+						check_zone.drawDecorations(currentView);
+						TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
 					}
 				}
 			}
