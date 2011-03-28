@@ -61,8 +61,9 @@ var tilesPhysicsArray = [
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
 						];
+
 var setBytes = function(num1,num2,num3) {
-    return (((num1 << 8) | num2) << 8) | num3;
+    return (((num1 << 16) | num2) << 4) | num3;
 };
 var makeTilesArray = function(tiles_a, decor_a, phys_a){
 	var tilesArray = new Array()
@@ -72,7 +73,7 @@ var makeTilesArray = function(tiles_a, decor_a, phys_a){
 	}
 	return tilesArray;
 }
-var tilesArray = makeTilesArray(maptilesArray, decorationtilesArray, decorationtilesArray)
+var tilesArray = makeTilesArray(maptilesArray, decorationtilesArray, tilesPhysicsArray)
 Message.addMessage(tilesArray.length + ' Total Tiles to Load');
 
 //function to detect canvas support by alterebro (http://code.google.com/p/browser-canvas-support/)

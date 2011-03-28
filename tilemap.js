@@ -72,7 +72,6 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 			view.y = view.tileEngine.getY();
 			view.viewWidth = view.x + view.tileEngine.width;
 			view.viewHeight = view.y + view.tileEngine.height;
-			return view;
 		},
 		isInView: function(check){
 			return (check.x+check.width > this.x && check.x <= this.viewWidth)&&(check.y+check.height > this.y && check.y <= this.viewHeight)
@@ -117,24 +116,6 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 	return view;
 }
 
-function newSprite(){
-	var Sprite = {
-		x: 0, // X position of this Sprite
-		y: 0, //Y position of this Sprite
-		width: 0, //width and height of this Sprite
-		height: 0,
-		sourceHash: 0, //index of Sprite source in tile engine's source array
-		init: function(x, y, width, height, sourceHash){ //initialize sprite
-			Sprite.x = x;
-			Sprite.y = y;
-			Sprite.width = width;
-			Sprite.height = height;
-			Sprite.sourceHash = sourceHash;
-		}
-	};
-	return Sprite;  //returns newly created sprite object
-};
-
 function newSourceImage(){ //image used to create tile 
 	var SourceImage = {
 		imageFilename: 0, //filename for image
@@ -167,8 +148,26 @@ function newTileSource(){ //image used to create tile
 	return TileSource;
 };
 
+function newSprite(){
+	var Sprite = {
+		x: 0, // X position of this Sprite
+		y: 0, //Y position of this Sprite
+		width: 0, //width and height of this Sprite
+		height: 0,
+		sourceHash: 0, //index of Sprite source in tile engine's source array
+		init: function(x, y, width, height, sourceHash){ //initialize sprite
+			Sprite.x = x;
+			Sprite.y = y;
+			Sprite.width = width;
+			Sprite.height = height;
+			Sprite.sourceHash = sourceHash;
+		}
+	};
+	return Sprite;  //returns newly created sprite object
+};
+
 function getBytes(num) {
-    return [num & 0xFF, (num >> 8) & 0xFF, (num >> 16) & 0xFF];
+    return [num & 0xF, (num >> 4) & 0xFFFF, (num >> 20) & 0xFFFF];
 };
 /*** function to create and then return a new Tile object */
 function newTile(){
@@ -360,9 +359,9 @@ function newTileEngine(){
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
 			TileEngine.mouse.update();
-			var view = TileEngine.view.update();
+			TileEngine.view.update();
 			if(TileEngine.zones){
-				(TileEngine.renderCircular ? TileEngine.renderCirc(view): TileEngine.renderNorm(view));
+				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
 			}
 			TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
 			TileEngine.ctx.fillRect(0,0,TileEngine.width, TileEngine.height);
