@@ -107,33 +107,30 @@ var Game = {
 	runLoop: function(){ //code to run on each game loop
 		Game.tileEngine.drawFrame();
 		FPS.fps_count++;  //increments frame for fps display
-		Tracker.updateTracker(Game.tileEngine.x.toFixed(2), Game.tileEngine.y.toFixed(2));
 	},
 	createTiles: function(){ //create and initialize tile engine
 		Game.tileEngine = newTileEngine(); //create tile engine object
-		var obj = new Object(); //create tile engine initializer object
-		obj.canvas = document.getElementById('main_canvas');
-		obj.ctx = obj.canvas.getContext('2d');
+		var mapObj = new Object(); //create tile engine initializer mapObject
+		mapObj.canvas = document.getElementById('main_canvas');
+		mapObj.ctx = mapObj.canvas.getContext('2d');
+		mapObj.init_x = 0;
+		mapObj.init_y = 0;
+		mapObj.tileWidth = 32;
+		mapObj.tileHeight = 32;
+		mapObj.tilesWide = 9;
+		mapObj.tilesHigh = 18;
+		mapObj.zoneTilesWide = 3;
+		mapObj.zoneTilesHigh = 3;
+		mapObj.renderCircular = true;
+		mapObj.sourceFile = 'tiles.png';
+		mapObj.sourceTileCounts = 254;
+		mapObj.sourceTileAccross = 22;
+		mapObj.tilesArray = tilesArray;
+		Game.tileEngine.setMapAttributes(mapObj);
 		
-		obj.init_x = 0;
-		obj.init_y = 0;
+		var spriteObj = new Object();
+		Game.tileEngine.setSpriteAttributes(spriteObj)
 		
-		obj.tileWidth = 32;
-		obj.tileHeight = 32;
-		obj.tilesWide = 9;
-		obj.tilesHigh = 18;
-		
-		obj.zoneTilesWide = 3;
-		obj.zoneTilesHigh = 3;
-		
-		obj.renderCircular = true;
-		
-		obj.sourceFiles = 'tiles.png';
-		obj.sourceTileCounts = 254;
-		obj.sourceTileAccross = 22;
-		obj.tilesArray = tilesArray;
-		
-		Game.tileEngine.setMapAttributes(obj);
 		Game.tileEngine.init();  //initialize tile engine object
 	}
 };

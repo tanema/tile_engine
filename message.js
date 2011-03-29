@@ -28,18 +28,5 @@ var FPS = {
 	}
 };
 
-var Tracker = {
-	tracker: 0,
-	init: function(element){
-		Tracker.tracker = element;
-	},
-	updateTracker: function(x,y){ 
-		if(Tracker.tracker){
-			Tracker.tracker.innerHTML = "Coordinates</br>x: " + x + "</br>y: " + y+ "</br>";
-		}
-	}
-};
-
 Message.init(document.getElementById('message'));
 FPS.init(document.getElementById('fps'));
-Tracker.init(document.getElementById('tracker'));

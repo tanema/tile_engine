@@ -3,10 +3,12 @@
 function newMouse(){
 	var Mouse = {
 			contex: 0,down: false,offsetx: 0,offsety: 0,timer: 0,accelx: 0,accely: 0,
-			clickposx: 0,clickposy: 0,tileEngine:0,
+			clickposx: 0,clickposy: 0,tileEngine:0,windowVelocityx: 0,windowVelocityy:0,
+			view: 0,
 			init: function(context, tileEngine) {
 				Mouse.context = context || window
 				Mouse.tileEngine = tileEngine;
+				Mouse.view = tileEngine.view;
 				$(Mouse.context).mousedown(function(event)  {Mouse.setClickPos(event)});
 				$(Mouse.context).mouseup(function()  {Mouse.down = false;});
 				$(Mouse.context).mouseout(function() {Mouse.down = false;});
@@ -38,19 +40,19 @@ function newMouse(){
 				Mouse.timer = 0;
 			},
 			update: function(){
-				Mouse.tileEngine.windowVelocityx = (Mouse.tileEngine.windowVelocityx + (this.accelx / 10)) * 0.96;
-				Mouse.tileEngine.windowVelocityy = (Mouse.tileEngine.windowVelocityy + (this.accely / 10)) * 0.96;
-				Mouse.tileEngine.x = Mouse.tileEngine.getX() - Mouse.tileEngine.windowVelocityx;
-				Mouse.tileEngine.y = Mouse.tileEngine.getY() - Mouse.tileEngine.windowVelocityy;
+				Mouse.windowVelocityx = (Mouse.windowVelocityx + (this.accelx / 10)) * 0.96;
+				Mouse.windowVelocityy = (Mouse.windowVelocityy + (this.accely / 10)) * 0.96;
+				Mouse.view.x -= Mouse.windowVelocityx;
+				Mouse.view.y -= Mouse.windowVelocityy;
 				if(!Mouse.tileEngine.renderCircular){
-					if(Mouse.tileEngine.x < 0 && !this.isDown())
-						Mouse.tileEngine.windowVelocityx -= 0.1;
-					if(Mouse.tileEngine.y < 0 && !this.isDown()) 
-						Mouse.tileEngine.windowVelocityy -= 0.1;
-					if(Mouse.tileEngine.view.viewWidth > Mouse.tileEngine.mapWidth) 
-						Mouse.tileEngine.windowVelocityx += 0.1;
-					if(Mouse.tileEngine.view.viewHeight > Mouse.tileEngine.mapHeight) 
-						Mouse.tileEngine.windowVelocityy += 0.1;
+					if(Mouse.view.x < 0 && !this.isDown())
+						Mouse.windowVelocityx -= 0.1;
+					if(Mouse.view.y < 0 && !this.isDown()) 
+						Mouse.windowVelocityy -= 0.1;
+					if(Mouse.view.viewWidth > Mouse.tileEngine.mapWidth) 
+						Mouse.windowVelocityx += 0.1;
+					if(Mouse.view.viewHeight > Mouse.tileEngine.mapHeight) 
+						Mouse.windowVelocityy += 0.1;
 				}
 				this.reset();
 			}
@@ -68,8 +70,8 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 		xoffset: 0,
 		yoffset: 0,
 		update : function(){
-			view.x = view.tileEngine.getX();
-			view.y = view.tileEngine.getY();
+			view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
+			view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
 			view.viewWidth = view.x + view.tileEngine.width;
 			view.viewHeight = view.y + view.tileEngine.height;
 		},
@@ -120,10 +122,8 @@ function newSourceImage(){ //image used to create tile
 	var SourceImage = {
 		imageFilename: 0, //filename for image
 		image: 0, //dom image object
-		is_ready: 0, //is image loaded and ready to be drawn
 		init: function(file){
 			SourceImage.imageFilename = file;
-			SourceImage.is_ready = false;
 			SourceImage.image = new Image();  //create new image object
 			SourceImage.image.src = file; //load file into image object
 		}
@@ -285,7 +285,7 @@ function newTileEngine(){
 		ctx: 0, //main canvas drawing context
 		tiles: 0, //array of tiles
 		zones: 0, //array of tile zones
-		sources: 0, //array of source images
+		sources: new Array(), //array of source images
 		tileSource: 0, //array of tile source objects, one for each unique tile
 		width: 0, //width of tile map
 		height: 0,  //height of tile map
@@ -299,62 +299,58 @@ function newTileEngine(){
 		mapHeight: 0,
 		sprites: 0,
 		main_sprite: 0,
-		sourceFiles: 0,
 		sourceTileCounts: 0,
 		sourceTileAccross: 0,
 		tilesArray: 0,
 		mouse: 0,
-		windowVelocityx: 0,
-		windowVelocityy: 0,
 		renderCircular: false,
 		timeofDay: 0.2,
 		view : 0,
 		init: function(){ //initialize experiment
+			TileEngine.view = newView(TileEngine);
 			TileEngine.mouse = newMouse();
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
-			TileEngine.sources = new Array();
-			TileEngine.loadSource();
-			TileEngine.sources[0].image.onload = function(){  //event handler for image load 
-				TileEngine.sources[0].is_ready = true; // image source is ready when image is loaded
-				TileEngine.tileSource = new Array();
-				TileEngine.createTileSource(TileEngine.sourceTileCounts, TileEngine.sourceTileAccross);	//create tile sources using image source		
-			}
 			TileEngine.tiles = new Array();
 			TileEngine.zones = new Array();
 			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
 			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
 			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
-			TileEngine.view = newView(TileEngine);
 		},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
 			TileEngine.ctx = obj.ctx; //create main drawing canvas
 			TileEngine.width  = TileEngine.canvas.width;
 			TileEngine.height = TileEngine.canvas.height;
-			TileEngine.x = obj.init_x;
-			TileEngine.y = obj.init_y;
 			TileEngine.tileWidth = obj.tileWidth;
 			TileEngine.tileHeight = obj.tileHeight;
 			TileEngine.zoneTilesWide = obj.zoneTilesWide;
 			TileEngine.zoneTilesHigh = obj.zoneTilesHigh;
 			TileEngine.tilesWide = obj.tilesWide;
 			TileEngine.tilesHigh = obj.tilesHigh;
-			TileEngine.sourceFiles = obj.sourceFiles;
 			TileEngine.sourceTileCounts = obj.sourceTileCounts;
 			TileEngine.sourceTileAccross = obj.sourceTileAccross;
 			TileEngine.tilesArray = obj.tilesArray;
 			TileEngine.renderCircular |= obj.renderCircular;
+			
+			var map_source = TileEngine.loadSource(obj.sourceFile);
+			map_source.image.onload = function(){  //event handler for image load 
+				TileEngine.tileSource = new Array();
+				TileEngine.createTileSource(TileEngine.sourceTileCounts, TileEngine.sourceTileAccross);	//create tile sources using image source		
+			}
 		},
-		loadSource: function(){ //create and initialize image source
+		setSpriteAttributes: function(obj){ 
+		
+		},
+		loadSource: function(sourceName){ //create and initialize image source
+			var i = TileEngine.sources.length;
+			while(i--){
+				if(TileEngine.sources[i].imageFilename == sourceName) 
+					return TileEngine.sources[i];
+			}
 			var source = newSourceImage();  
-			source.init(TileEngine.sourceFiles);
+			source.init(sourceName);
 			TileEngine.sources.push(source);
-		},
-		getX: function(){
-			return TileEngine.renderCircular ? TileEngine.x%TileEngine.mapWidth:TileEngine.x
-		},
-		getY: function(){
-			return TileEngine.renderCircular ? TileEngine.y%TileEngine.mapHeight:TileEngine.y
+			return source;
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
