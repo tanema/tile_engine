@@ -2,17 +2,16 @@
 
 function newMouse(){
 	var Mouse = {
-			contex: 0,down: false,offsetx: 0,offsety: 0,timer: 0,accelx: 0,accely: 0,
+			down: false,offsetx: 0,offsety: 0,timer: 0,accelx: 0,accely: 0,
 			clickposx: 0,clickposy: 0,tileEngine:0,windowVelocityx: 0,windowVelocityy:0,
 			view: 0,
 			init: function(context, tileEngine) {
-				Mouse.context = context || window
 				Mouse.tileEngine = tileEngine;
 				Mouse.view = tileEngine.view;
-				$(Mouse.context).mousedown(function(event)  {Mouse.setClickPos(event)});
-				$(Mouse.context).mouseup(function()  {Mouse.down = false;});
-				$(Mouse.context).mouseout(function() {Mouse.down = false;});
-				$(Mouse.context).mousemove(function(event) {Mouse.move(event);});
+				$(context).mousedown(function(event)  {Mouse.setClickPos(event)});
+				$(context).mouseup(function()  {Mouse.down = false;});
+				$(context).mouseout(function() {Mouse.down = false;});
+				$(context).mousemove(function(event) {Mouse.move(event);});
 			},
 			isDown: function() {return Mouse.down;},
 			setClickPos: function(event) { 
@@ -59,6 +58,41 @@ function newMouse(){
 	};
 	return Mouse;
 }
+function newKeyboard(){
+	var keyboard = {
+		orientation: 0, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
+		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
+		init: function(context, to_move) {
+			keyboard.ctx = context;
+			keyboard.orientation = {};
+			keyboard.actor = to_move;
+			document.onkeydown = function(event)  {keyboard.orientation[event.keyCode] = true;}
+			document.onkeyup = function(event)  {keyboard.orientation[event.keyCode] = false;}
+			$(context).mouseup(function(event){keyboard.ctx_click = true;})
+			$(document).mousedown(function(event)  {keyboard.doc_click = true;})
+			$(document).mouseup(function(event)  {
+				keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
+				if(keyboard._focus)	$(keyboard.ctx).css("border", "2px solid lightblue" )
+				else	$(keyboard.ctx).css("border", "" )
+				keyboard.ctx_click = false;
+				keyboard.doc_click = false;
+			})
+		},
+		update: function (){
+			if(keyboard._focus){
+				if (keyboard.orientation[keyboard.LEFT])
+					keyboard.actor.x -= 1;
+				if (keyboard.orientation[keyboard.RIGHT])
+					keyboard.actor.x += 1;
+				if (keyboard.orientation[keyboard.UP])
+					keyboard.actor.y -= 1;
+				if (keyboard.orientation[keyboard.DOWN])
+					keyboard.actor.y += 1;
+			}
+		}
+	}
+	return keyboard;
+}
 
 function newView(TileEngine, init_x, init_y, vw, vh){
 	var view = {
@@ -69,6 +103,12 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 		viewHeight: vh || 0,
 		xoffset: 0,
 		yoffset: 0,
+		init: function(x,y){
+			view.x = view.tileEngine.renderCircular ? x%view.tileEngine.mapWidth:x
+			view.y = view.tileEngine.renderCircular ? y%view.tileEngine.mapHeight:y
+			view.viewWidth = view.x + view.tileEngine.width;
+			view.viewHeight = view.y + view.tileEngine.height;
+		},
 		update : function(){
 			view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
 			view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
@@ -285,7 +325,6 @@ function newTileEngine(){
 		ctx: 0, //main canvas drawing context
 		tiles: 0, //array of tiles
 		zones: 0, //array of tile zones
-		sources: new Array(), //array of source images
 		tileSource: 0, //array of tile source objects, one for each unique tile
 		width: 0, //width of tile map
 		height: 0,  //height of tile map
@@ -299,22 +338,22 @@ function newTileEngine(){
 		mapHeight: 0,
 		sprites: 0,
 		main_sprite: 0,
-		sourceTileCounts: 0,
-		sourceTileAccross: 0,
 		tilesArray: 0,
 		mouse: 0,
+		keyboard: 0,
 		renderCircular: false,
 		timeofDay: 0.2,
 		view : 0,
 		init: function(){ //initialize experiment
-			TileEngine.view = newView(TileEngine);
+			if(!TileEngine.view)
+				alert("please set map attributes before initializing tile engine");
 			TileEngine.mouse = newMouse();
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
+			TileEngine.keyboard = newKeyboard();
+			TileEngine.keyboard.init(TileEngine.canvas, TileEngine.view)
 			TileEngine.tiles = new Array();
 			TileEngine.zones = new Array();
 			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
-			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
-			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
 		},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
@@ -327,35 +366,27 @@ function newTileEngine(){
 			TileEngine.zoneTilesHigh = obj.zoneTilesHigh;
 			TileEngine.tilesWide = obj.tilesWide;
 			TileEngine.tilesHigh = obj.tilesHigh;
-			TileEngine.sourceTileCounts = obj.sourceTileCounts;
-			TileEngine.sourceTileAccross = obj.sourceTileAccross;
 			TileEngine.tilesArray = obj.tilesArray;
 			TileEngine.renderCircular |= obj.renderCircular;
-			
-			var map_source = TileEngine.loadSource(obj.sourceFile);
-			map_source.image.onload = function(){  //event handler for image load 
-				TileEngine.tileSource = new Array();
-				TileEngine.createTileSource(TileEngine.sourceTileCounts, TileEngine.sourceTileAccross);	//create tile sources using image source		
-			}
-		},
-		setSpriteAttributes: function(obj){ 
-		
-		},
-		loadSource: function(sourceName){ //create and initialize image source
-			var i = TileEngine.sources.length;
-			while(i--){
-				if(TileEngine.sources[i].imageFilename == sourceName) 
-					return TileEngine.sources[i];
-			}
+			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
+			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
+			TileEngine.view = newView(TileEngine);
+			TileEngine.view.init(obj.init_x,obj.init_y);
 			var source = newSourceImage();  
-			source.init(sourceName);
-			TileEngine.sources.push(source);
-			return source;
+			source.init(obj.sourceFile);
+			source.image.onload = function(){  //event handler for image load 
+				TileEngine.tileSource = TileEngine.createTileSource(obj.sourceTileCounts, obj.sourceTileAccross, source);	//create tile sources using image source		
+			}
+		},
+		setMainSpriteAttributes: function(obj){ 
+			TileEngine.main_sprite = newSprite();
+			TileEngine.main_sprite.init(obj.init_x, obj.init_y, TileEngine.tileWidth, TileEngine.tileHeight, obj.movement_hash)
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
 			TileEngine.mouse.update();
 			TileEngine.view.update();
+			TileEngine.keyboard.update();
 			if(TileEngine.zones){
 				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
 			}
@@ -427,14 +458,15 @@ function newTileEngine(){
 			if(down)views.push(view.down());
 			return views;
 		},
-		createTileSource: function(count, accross){ //create tiles sources
+		createTileSource: function(count, accross, source){ //create tiles sources
+			var source_array = new Array();
 			var accross_count = 0;
 			var x = 0;
 			var y = 0;
 			for(var i = 0; i < count; i++){
 				var new_tileSource = newTileSource();
-				new_tileSource.init(TileEngine.tileWidth, TileEngine.tileHeight, x, y, TileEngine.sources[0]);
-				TileEngine.tileSource.push(new_tileSource);
+				new_tileSource.init(TileEngine.tileWidth, TileEngine.tileHeight, x, y, source);
+				source_array.push(new_tileSource);
 				accross_count++;
 				x += TileEngine.tileWidth;
 				if(accross_count >= accross){
@@ -443,6 +475,7 @@ function newTileEngine(){
 					x = 0;
 				}
 			}
+			return source_array;
 		},
 		createZones: function(){//create array of zones for map
 			//caluculate how many zones we need (width by height)

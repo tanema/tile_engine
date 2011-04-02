@@ -111,25 +111,33 @@ var Game = {
 	createTiles: function(){ //create and initialize tile engine
 		Game.tileEngine = newTileEngine(); //create tile engine object
 		var mapObj = new Object(); //create tile engine initializer mapObject
-		mapObj.canvas = document.getElementById('main_canvas');
-		mapObj.ctx = mapObj.canvas.getContext('2d');
-		mapObj.init_x = 0;
-		mapObj.init_y = 0;
-		mapObj.tileWidth = 32;
-		mapObj.tileHeight = 32;
-		mapObj.tilesWide = 9;
-		mapObj.tilesHigh = 18;
-		mapObj.zoneTilesWide = 3;
-		mapObj.zoneTilesHigh = 3;
-		mapObj.renderCircular = true;
-		mapObj.sourceFile = 'tiles.png';
-		mapObj.sourceTileCounts = 254;
-		mapObj.sourceTileAccross = 22;
-		mapObj.tilesArray = tilesArray;
+			mapObj.canvas = document.getElementById('main_canvas');
+			mapObj.ctx = mapObj.canvas.getContext('2d');
+			mapObj.init_x = 0;
+			mapObj.init_y = 0;
+			mapObj.tileWidth = 32;
+			mapObj.tileHeight = 32;
+			mapObj.tilesWide = 9;
+			mapObj.tilesHigh = 18;
+			mapObj.zoneTilesWide = 3;
+			mapObj.zoneTilesHigh = 3;
+			mapObj.renderCircular = true;
+			mapObj.sourceFile = 'tiles.png';
+			mapObj.sourceTileCounts = 254;
+			mapObj.sourceTileAccross = 22;
+			mapObj.tilesArray = tilesArray;
 		Game.tileEngine.setMapAttributes(mapObj);
 		
 		var spriteObj = new Object();
-		Game.tileEngine.setSpriteAttributes(spriteObj)
+			spriteObj.init_x = 0;
+			spriteObj.init_y = 0;
+			spriteObj.movement_hash = {
+				up: 	 [15,16,17,18,19,20,21],
+				down:  [37,38,39,40,41,42,43],
+				left:  [60,82,104,126,148,170,192],
+				right: [59,81,103,125,147,169,191]
+			}
+		Game.tileEngine.setMainSpriteAttributes(spriteObj)
 		
 		Game.tileEngine.init();  //initialize tile engine object
 	}
