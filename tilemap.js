@@ -87,9 +87,9 @@ function newKeyboard(){
 				if (keyboard.orientation[keyboard.RIGHT])
 					keyboard.speedX += keyboard.thrust;
 				if (keyboard.orientation[keyboard.UP])
-					keyboard.speedY -= keyboard.thrust;
-				if (keyboard.orientation[keyboard.DOWN])
 					keyboard.speedY += keyboard.thrust;
+				if (keyboard.orientation[keyboard.DOWN])
+					keyboard.speedY -= keyboard.thrust;
 				if (!keyboard.orientation[keyboard.LEFT] && !keyboard.orientation[keyboard.RIGHT])
 					keyboard.speedX *= keyboard.decay;
 				if (!keyboard.orientation[keyboard.UP] && !keyboard.orientation[keyboard.DOWN])
