@@ -3,15 +3,15 @@
 function newMouse(){
 	var Mouse = {
 			down: false,offsetx: 0,offsety: 0,timer: 0,accelx: 0,accely: 0,
-			clickposx: 0,clickposy: 0,tileEngine:0,windowVelocityx: 0,windowVelocityy:0,
-			view: 0,
+			clickposx: 0,clickposy: 0,tileEngine:0,vel_x: 0,vel_y:0,view: 0,
 			init: function(context, tileEngine) {
 				Mouse.tileEngine = tileEngine;
 				Mouse.view = tileEngine.view;
-				$(context).mousedown(function(event)  {Mouse.setClickPos(event)});
-				$(context).mouseup(function()  {Mouse.down = false;});
-				$(context).mouseout(function() {Mouse.down = false;});
-				$(context).mousemove(function(event) {Mouse.move(event);});
+				$(context)
+						.mousedown(function(event)  {Mouse.setClickPos(event)})
+						.mouseup(function()  {Mouse.down = false;})
+						.mouseout(function() {Mouse.down = false;})
+						.mousemove(function(event) {Mouse.move(event);});
 			},
 			isDown: function() {return Mouse.down;},
 			setClickPos: function(event) { 
@@ -39,19 +39,19 @@ function newMouse(){
 				Mouse.timer = 0;
 			},
 			update: function(){
-				Mouse.windowVelocityx = (Mouse.windowVelocityx + (this.accelx / 10)) * 0.96;
-				Mouse.windowVelocityy = (Mouse.windowVelocityy + (this.accely / 10)) * 0.96;
-				Mouse.view.x -= Mouse.windowVelocityx;
-				Mouse.view.y -= Mouse.windowVelocityy;
+				Mouse.vel_x = (Mouse.vel_x + (this.accelx / 10)) * 0.96;
+				Mouse.vel_y = (Mouse.vel_y + (this.accely / 10)) * 0.96;
+				Mouse.view.x -= Mouse.vel_x;
+				Mouse.view.y -= Mouse.vel_y;
 				if(!Mouse.tileEngine.renderCircular){
 					if(Mouse.view.x < 0 && !this.isDown())
-						Mouse.windowVelocityx -= 0.1;
+						Mouse.vel_x -= 0.1;
 					if(Mouse.view.y < 0 && !this.isDown()) 
-						Mouse.windowVelocityy -= 0.1;
-					if(Mouse.view.viewWidth > Mouse.tileEngine.mapWidth) 
-						Mouse.windowVelocityx += 0.1;
-					if(Mouse.view.viewHeight > Mouse.tileEngine.mapHeight) 
-						Mouse.windowVelocityy += 0.1;
+						Mouse.vel_y -= 0.1;
+					if(Mouse.view.viewWidth > Mouse.tileEngine.mapWidth && !this.isDown()) 
+						Mouse.vel_x += 0.1;
+					if(Mouse.view.viewHeight > Mouse.tileEngine.mapHeight && !this.isDown()) 
+						Mouse.vel_y += 0.1;
 				}
 				this.reset();
 			}
@@ -62,32 +62,49 @@ function newKeyboard(){
 	var keyboard = {
 		orientation: 0, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
+		thrust: .3,	decay: .97,	maxSpeed: 5, speedX: 0,speedY: 0,
 		init: function(context, to_move) {
 			keyboard.ctx = context;
 			keyboard.orientation = {};
 			keyboard.actor = to_move;
-			document.onkeydown = function(event)  {keyboard.orientation[event.keyCode] = true;}
-			document.onkeyup = function(event)  {keyboard.orientation[event.keyCode] = false;}
 			$(context).mouseup(function(event){keyboard.ctx_click = true;})
-			$(document).mousedown(function(event)  {keyboard.doc_click = true;})
-			$(document).mouseup(function(event)  {
-				keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
-				if(keyboard._focus)	$(keyboard.ctx).css("border", "2px solid lightblue" )
-				else	$(keyboard.ctx).css("border", "" )
-				keyboard.ctx_click = false;
-				keyboard.doc_click = false;
-			})
+			$(document)
+					.keydown(function(event)  {keyboard.orientation[event.keyCode] = true;})
+					.keyup(function(event)  {keyboard.orientation[event.keyCode] = false;})
+					.mousedown(function(event)  {keyboard.doc_click = true;})
+					.mouseup(function(event)  {
+						keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
+						if(keyboard._focus)	$(keyboard.ctx).css("border", "2px solid lightblue" )
+						else	$(keyboard.ctx).css("border", "" )
+						keyboard.ctx_click = false;
+						keyboard.doc_click = false;
+					})
 		},
 		update: function (){
 			if(keyboard._focus){
 				if (keyboard.orientation[keyboard.LEFT])
-					keyboard.actor.x -= 1;
+					keyboard.speedX -= keyboard.thrust;
 				if (keyboard.orientation[keyboard.RIGHT])
-					keyboard.actor.x += 1;
+					keyboard.speedX += keyboard.thrust;
 				if (keyboard.orientation[keyboard.UP])
-					keyboard.actor.y -= 1;
+					keyboard.speedY -= keyboard.thrust;
 				if (keyboard.orientation[keyboard.DOWN])
-					keyboard.actor.y += 1;
+					keyboard.speedY += keyboard.thrust;
+				if (!keyboard.orientation[keyboard.LEFT] && !keyboard.orientation[keyboard.RIGHT])
+					keyboard.speedX *= keyboard.decay;
+				if (!keyboard.orientation[keyboard.UP] && !keyboard.orientation[keyboard.DOWN])
+					keyboard.speedY *= keyboard.decay;
+					
+				var currentSpeed = Math.sqrt((keyboard.speedX * keyboard.speedX) + (keyboard.speedY * keyboard.speedY));
+				
+				if (currentSpeed > keyboard.maxSpeed){
+					keyboard.speedX *= keyboard.maxSpeed/currentSpeed;
+					keyboard.speedY *= keyboard.maxSpeed/currentSpeed;
+				}
+				
+				// Move _player based on calculations above
+				keyboard.actor.y -= keyboard.speedY;
+				keyboard.actor.x += keyboard.speedX;
 			}
 		}
 	}
