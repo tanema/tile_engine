@@ -62,7 +62,7 @@ function newKeyboard(){
 	var keyboard = {
 		orientation: 0, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
-		thrust: .3,	decay: .97,	maxSpeed: 5, speedX: 0,speedY: 0,
+		thrust: .3,	decay: .97,	maxSpeed: 1, speedX: 0,speedY: 0,
 		init: function(context, to_move) {
 			keyboard.ctx = context;
 			keyboard.orientation = {};
@@ -207,17 +207,21 @@ function newTileSource(){ //image used to create tile
 
 function newSprite(){
 	var Sprite = {
-		x: 0, // X position of this Sprite
-		y: 0, //Y position of this Sprite
-		width: 0, //width and height of this Sprite
-		height: 0,
-		sourceHash: 0, //index of Sprite source in tile engine's source array
-		init: function(x, y, width, height, sourceHash){ //initialize sprite
+		x: 0,y: 0,width: 0,height: 0,sourceHash: 0, tileEngine: 0,
+		init: function(x, y, width, height, sourceHash, te){ //initialize sprite
 			Sprite.x = x;
 			Sprite.y = y;
 			Sprite.width = width;
 			Sprite.height = height;
 			Sprite.sourceHash = sourceHash;
+			Sprite.tileEngine = te;
+		},
+		update: function(){
+			Sprite.x = Sprite.tileEngine.renderCircular ? Sprite.x%Sprite.tileEngine.mapWidth:Sprite.x
+			Sprite.y = Sprite.tileEngine.renderCircular ? Sprite.y%Sprite.tileEngine.mapHeight:Sprite.y
+		},
+		current_index: function(){
+			return Sprite.sourceHash.up[0];
 		}
 	};
 	return Sprite;  //returns newly created sprite object
@@ -367,7 +371,7 @@ function newTileEngine(){
 			TileEngine.mouse = newMouse();
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
 			TileEngine.keyboard = newKeyboard();
-			TileEngine.keyboard.init(TileEngine.canvas, TileEngine.view)
+			TileEngine.keyboard.init(TileEngine.canvas, TileEngine.main_sprite)
 			TileEngine.tiles = new Array();
 			TileEngine.zones = new Array();
 			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
@@ -397,7 +401,7 @@ function newTileEngine(){
 		},
 		setMainSpriteAttributes: function(obj){ 
 			TileEngine.main_sprite = newSprite();
-			TileEngine.main_sprite.init(obj.init_x, obj.init_y, TileEngine.tileWidth, TileEngine.tileHeight, obj.movement_hash)
+			TileEngine.main_sprite.init(obj.init_x, obj.init_y, TileEngine.tileWidth, TileEngine.tileHeight, obj.movement_hash, TileEngine)
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
@@ -425,6 +429,17 @@ function newTileEngine(){
 					}
 				}
 			}
+			//main_sprite
+			var v = views.length;
+			while(TileEngine.main_sprite && v--){
+				var currentView = views[v];
+				TileEngine.main_sprite.update();
+				if(currentView.isInView(TileEngine.main_sprite)){
+					TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_index()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
+				}
+			}
+			
+			//decorations
 			i = validZones.length;
 			while(i--){
 				var check_zone = validZones[i],
@@ -439,20 +454,24 @@ function newTileEngine(){
 			//base map
 			while(i--){
 				var check_zone = TileEngine.zones[i];
-				if(view.isInView(check_zone, view)){
+				if(view.isInView(check_zone)){
 					validZones.push(check_zone.forDecoration(view));
 					check_zone.drawTiles(view);
 					TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
 				} 
 			}
 			
+			//main_sprite
+			TileEngine.main_sprite.update();
+			if(TileEngine.main_sprite && view.isInView(TileEngine.main_sprite))
+				TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_index()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
+			
 			//decorations
 			i = validZones.length;
 			while(i--){
-				var check_zone = validZones[i],
-						currentView = check_zone.viewoffset;
-				check_zone.drawDecorations(currentView);
-				TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
+				var check_zone = validZones[i];
+				check_zone.drawDecorations(view);
+				TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
 			}
 		},
 		getCurrentViews: function(view){
