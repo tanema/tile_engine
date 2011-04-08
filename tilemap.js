@@ -15,6 +15,7 @@ function newMouse(){
 			},
 			isDown: function() {return Mouse.down;},
 			setClickPos: function(event) { 
+				Mouse.tileEngine.active_controller = Mouse;
 				Mouse.clickposx = event.screenX;
 				Mouse.clickposy = event.screenY;
 				Mouse.down = true;
@@ -63,13 +64,18 @@ function newKeyboard(){
 		orientation: 0, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
 		thrust: .3,	decay: .97,	maxSpeed: 1, speedX: 0,speedY: 0,
-		init: function(context, to_move) {
-			keyboard.ctx = context;
+		view: 0,tile_engine:0,
+		init: function(TileEngine, to_move) {
+			keyboard.ctx = TileEngine.canvas;
+			keyboard.tile_engine = TileEngine;
 			keyboard.orientation = {};
 			keyboard.actor = to_move;
-			$(context).mouseup(function(event){keyboard.ctx_click = true;})
+			$(keyboard.ctx).mouseup(function(event){keyboard.ctx_click = true;})
 			$(document)
-					.keydown(function(event)  {keyboard.orientation[event.keyCode] = true;})
+					.keydown(function(event)  {
+						keyboard.orientation[event.keyCode] = true;
+						keyboard.tile_engine.active_controller = keyboard;
+					})
 					.keyup(function(event)  {keyboard.orientation[event.keyCode] = false;})
 					.mousedown(function(event)  {keyboard.doc_click = true;})
 					.mouseup(function(event)  {
@@ -105,6 +111,10 @@ function newKeyboard(){
 				// Move _player based on calculations above
 				keyboard.actor.y -= keyboard.speedY;
 				keyboard.actor.x += keyboard.speedX;
+				if(keyboard.tile_engine.active_controller == keyboard){
+					keyboard.tile_engine.view.x += (keyboard.tile_engine.main_sprite.x - (keyboard.tile_engine.view.x + (keyboard.tile_engine.width*0.5))) * 0.01,
+					keyboard.tile_engine.view.y += (keyboard.tile_engine.main_sprite.y - (keyboard.tile_engine.view.y + (keyboard.tile_engine.width*0.5))) * 0.01;
+				}
 			}
 		}
 	}
@@ -217,8 +227,10 @@ function newSprite(){
 			Sprite.tileEngine = te;
 		},
 		update: function(){
-			Sprite.x = Sprite.tileEngine.renderCircular ? Sprite.x%Sprite.tileEngine.mapWidth:Sprite.x
-			Sprite.y = Sprite.tileEngine.renderCircular ? Sprite.y%Sprite.tileEngine.mapHeight:Sprite.y
+			if(Sprite.tileEngine.renderCircular){
+				Sprite.x = (Sprite.x >= 0 ? Sprite.x%Sprite.tileEngine.mapWidth:Sprite.x+Sprite.tileEngine.mapWidth)
+				Sprite.y = (Sprite.y >= 0 ? Sprite.y%Sprite.tileEngine.mapHeight:Sprite.y+Sprite.tileEngine.mapHeight)
+			}
 		},
 		current_index: function(){
 			return Sprite.sourceHash.up[0];
@@ -365,13 +377,14 @@ function newTileEngine(){
 		renderCircular: false,
 		timeofDay: 0.2,
 		view : 0,
+		active_controller: 0,
 		init: function(){ //initialize experiment
 			if(!TileEngine.view)
 				alert("please set map attributes before initializing tile engine");
 			TileEngine.mouse = newMouse();
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
 			TileEngine.keyboard = newKeyboard();
-			TileEngine.keyboard.init(TileEngine.canvas, TileEngine.main_sprite)
+			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
 			TileEngine.tiles = new Array();
 			TileEngine.zones = new Array();
 			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
@@ -405,9 +418,10 @@ function newTileEngine(){
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
-			TileEngine.mouse.update();
 			TileEngine.view.update();
+			TileEngine.mouse.update();
 			TileEngine.keyboard.update();
+			TileEngine.main_sprite.update();
 			if(TileEngine.zones){
 				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
 			}
@@ -431,9 +445,8 @@ function newTileEngine(){
 			}
 			//main_sprite
 			var v = views.length;
-			while(TileEngine.main_sprite && v--){
+			while(v--){
 				var currentView = views[v];
-				TileEngine.main_sprite.update();
 				if(currentView.isInView(TileEngine.main_sprite)){
 					TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_index()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
 				}
@@ -462,8 +475,7 @@ function newTileEngine(){
 			}
 			
 			//main_sprite
-			TileEngine.main_sprite.update();
-			if(TileEngine.main_sprite && view.isInView(TileEngine.main_sprite))
+			if(view.isInView(TileEngine.main_sprite))
 				TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_index()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
 			
 			//decorations
