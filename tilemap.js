@@ -105,14 +105,22 @@ function newKeyboard(){
 		},
 		update: function (){
 			if(keyboard._focus){
-				if (keyboard.orientation[keyboard.LEFT])
+				if (keyboard.orientation[keyboard.LEFT]){
 					keyboard.speedX -= keyboard.thrust;
-				if (keyboard.orientation[keyboard.RIGHT])
+					keyboard.actor.left();
+				}
+				if (keyboard.orientation[keyboard.RIGHT]){
 					keyboard.speedX += keyboard.thrust;
-				if (keyboard.orientation[keyboard.UP])
+					keyboard.actor.right();
+				}
+				if (keyboard.orientation[keyboard.UP]){
 					keyboard.speedY += keyboard.thrust;
-				if (keyboard.orientation[keyboard.DOWN])
+					keyboard.actor.up();
+				}
+				if (keyboard.orientation[keyboard.DOWN]){
 					keyboard.speedY -= keyboard.thrust;
+					keyboard.actor.down();
+				}
 				if (!keyboard.orientation[keyboard.LEFT] && !keyboard.orientation[keyboard.RIGHT])
 					keyboard.speedX *= keyboard.decay;
 				if (!keyboard.orientation[keyboard.UP] && !keyboard.orientation[keyboard.DOWN])
@@ -129,8 +137,8 @@ function newKeyboard(){
 				keyboard.actor.y -= keyboard.speedY;
 				keyboard.actor.x += keyboard.speedX;
 				if(keyboard.tile_engine.active_controller == keyboard){
-					keyboard.tile_engine.view.x += (keyboard.tile_engine.main_sprite.x - (keyboard.tile_engine.view.x + (keyboard.tile_engine.width*0.5))) * 0.01,
-					keyboard.tile_engine.view.y += (keyboard.tile_engine.main_sprite.y - (keyboard.tile_engine.view.y + (keyboard.tile_engine.width*0.5))) * 0.01;
+					keyboard.tile_engine.view.x += (keyboard.actor.x - (keyboard.tile_engine.view.x + (keyboard.tile_engine.width*0.5))) * 0.01,
+					keyboard.tile_engine.view.y += (keyboard.actor.y - (keyboard.tile_engine.view.y + (keyboard.tile_engine.height*0.5))) * 0.01;
 				}
 			}
 		}
@@ -234,7 +242,7 @@ function newTileSource(){ //image used to create tile
 
 function newSprite(){
 	var Sprite = {
-		x: 0,y: 0,width: 0,height: 0,sourceHash: 0, tileEngine: 0,
+		x: 0,y: 0,width: 0,height: 0,sourceHash: 0, tileEngine: 0,current_index:0, current_direction: 0,
 		init: function(x, y, width, height, sourceHash, te){ //initialize sprite
 			Sprite.x = x;
 			Sprite.y = y;
@@ -242,6 +250,7 @@ function newSprite(){
 			Sprite.height = height;
 			Sprite.sourceHash = sourceHash;
 			Sprite.tileEngine = te;
+			Sprite.current_direction = Sprite.sourceHash.up
 		},
 		update: function(){
 			if(Sprite.tileEngine.renderCircular){
@@ -249,8 +258,29 @@ function newSprite(){
 				Sprite.y = (Sprite.y >= 0 ? Sprite.y%Sprite.tileEngine.mapHeight:Sprite.y+Sprite.tileEngine.mapHeight)
 			}
 		},
-		current_index: function(){
-			return Sprite.sourceHash.up[0];
+		current_frame: function(){
+			return Sprite.current_direction[Sprite.current_index];
+		},
+		up: function(){
+			Sprite.current_direction = Sprite.sourceHash.up
+			Sprite.update_index()
+		},
+		down: function(){
+			Sprite.current_direction = Sprite.sourceHash.down
+			Sprite.update_index()
+		},
+		left: function(){
+			Sprite.current_direction = Sprite.sourceHash.left
+			Sprite.update_index()
+		},
+		right: function(){
+			Sprite.current_direction = Sprite.sourceHash.right
+			Sprite.update_index()
+		},
+		update_index: function(){
+			Sprite.current_index++;
+			if(Sprite.current_index >= Sprite.current_direction.length)
+				Sprite.current_index = 0
 		}
 	};
 	return Sprite;  //returns newly created sprite object
@@ -465,7 +495,7 @@ function newTileEngine(){
 			while(v--){
 				var currentView = views[v];
 				if(currentView.isInView(TileEngine.main_sprite)){
-					TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_index()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
+					TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_frame()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
 				}
 			}
 			
@@ -493,7 +523,7 @@ function newTileEngine(){
 			
 			//main_sprite
 			if(view.isInView(TileEngine.main_sprite))
-				TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_index()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
+				TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_frame()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
 			
 			//decorations
 			i = validZones.length;
