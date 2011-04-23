@@ -78,29 +78,33 @@ function newMouse(){
 }
 function newKeyboard(){
 	var keyboard = {
-		orientation: 0, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
+		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
 		thrust: .3,	decay: .97,	maxSpeed: 1, speedX: 0,speedY: 0,
-		view: 0,tile_engine:0,
+		view: 0, tile_engine:0, offset_x: 0, offset_y: 0, x:0, y:0,
 		init: function(TileEngine, to_move) {
 			keyboard.ctx = TileEngine.canvas;
 			keyboard.tile_engine = TileEngine;
-			keyboard.orientation = {};
 			keyboard.actor = to_move;
+			keyboard.offset_x = TileEngine.width * 0.5;
+			keyboard.offset_y = TileEngine.height * 0.5;
 			$(keyboard.ctx).mouseup(function(event){keyboard.ctx_click = true;})
 			$(document)
-					.keydown(function(event)  {
+					.keydown(function(event){
 						keyboard.orientation[event.keyCode] = true;
 						keyboard.tile_engine.active_controller = keyboard;
 					})
-					.keyup(function(event)  {keyboard.orientation[event.keyCode] = false;})
-					.mousedown(function(event)  {keyboard.doc_click = true;})
-					.mouseup(function(event)  {
+					.keyup(function(event){
+						keyboard.orientation[event.keyCode] = false;
+						//keyboard.tile_engine.active_controller = keyboard.tile_engine.mouse
+					})
+					.mousedown(function(event){keyboard.doc_click = true;})
+					.mouseup(function(event){
 						keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
-						if(keyboard._focus)	$(keyboard.ctx).css("border", "2px solid lightblue" )
-						else	$(keyboard.ctx).css("border", "" )
-						keyboard.ctx_click = false;
-						keyboard.doc_click = false;
+						$('canvas').css("border", (keyboard._focus ? "2px solid lightblue":""))
+						keyboard.x = keyboard.actor.x;
+						keyboard.y = keyboard.actor.y;
+						keyboard.doc_click = keyboard.ctx_click = false;
 					})
 		},
 		update: function (){
@@ -121,25 +125,41 @@ function newKeyboard(){
 					keyboard.speedY -= keyboard.thrust;
 					keyboard.actor.down();
 				}
-				if (!keyboard.orientation[keyboard.LEFT] && !keyboard.orientation[keyboard.RIGHT])
-					keyboard.speedX *= keyboard.decay;
-				if (!keyboard.orientation[keyboard.UP] && !keyboard.orientation[keyboard.DOWN])
-					keyboard.speedY *= keyboard.decay;
-					
+				keyboard.speedX *= keyboard.decay;
+				keyboard.speedY *= keyboard.decay;
 				var currentSpeed = Math.sqrt((keyboard.speedX * keyboard.speedX) + (keyboard.speedY * keyboard.speedY));
-				
 				if (currentSpeed > keyboard.maxSpeed){
 					keyboard.speedX *= keyboard.maxSpeed/currentSpeed;
 					keyboard.speedY *= keyboard.maxSpeed/currentSpeed;
 				}
-				
 				// Move _player based on calculations above
-				keyboard.actor.y -= keyboard.speedY;
 				keyboard.actor.x += keyboard.speedX;
-				if(keyboard.tile_engine.active_controller == keyboard){
-					keyboard.tile_engine.view.x += (keyboard.actor.x - (keyboard.tile_engine.view.x + (keyboard.tile_engine.width*0.5))) * 0.01,
-					keyboard.tile_engine.view.y += (keyboard.actor.y - (keyboard.tile_engine.view.y + (keyboard.tile_engine.height*0.5))) * 0.01;
+				keyboard.actor.y -= keyboard.speedY;
+				keyboard.x += keyboard.speedX;
+				keyboard.y -= keyboard.speedY;
+				
+				if(keyboard.tile_engine.renderCircular){
+					if(keyboard.tile_engine.view.x >= keyboard.tile_engine.mapWidth){
+						keyboard.tile_engine.view.x = 0
+						keyboard.x -= keyboard.tile_engine.mapWidth
+					}
+					if(keyboard.tile_engine.view.x <= -keyboard.tile_engine.mapWidth){
+						keyboard.tile_engine.view.x = 0
+						keyboard.x += keyboard.tile_engine.mapWidth
+					}
+					if(keyboard.tile_engine.view.y >= keyboard.tile_engine.mapHeight){
+						keyboard.tile_engine.view.y = 0
+						keyboard.y -= keyboard.tile_engine.mapHeight
+					}
+					if(keyboard.tile_engine.view.y <= -keyboard.tile_engine.mapHeight){
+						keyboard.tile_engine.view.y = 0
+						keyboard.y += keyboard.tile_engine.mapHeight
+					}
 				}
+				keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
+				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
+				keyboard.tile_engine.view.x += (keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.02
+				keyboard.tile_engine.view.y += (keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.01
 			}
 		}
 	}
@@ -148,24 +168,19 @@ function newKeyboard(){
 
 function newView(TileEngine, init_x, init_y, vw, vh){
 	var view = {
-		tileEngine:TileEngine,
-		x: init_x || 0,
-		y: init_y || 0,
-		viewWidth: vw || 0,
-		viewHeight: vh || 0,
-		xoffset: 0,
+		tileEngine:TileEngine,x: init_x || 0,y: init_y || 0,
+		viewWidth: vw || 0,	viewHeight: vh || 0,xoffset: 0,
 		yoffset: 0,
 		init: function(x,y){
-			view.x = view.tileEngine.renderCircular ? x%view.tileEngine.mapWidth:x
-			view.y = view.tileEngine.renderCircular ? y%view.tileEngine.mapHeight:y
-			view.viewWidth = view.x + view.tileEngine.width;
-			view.viewHeight = view.y + view.tileEngine.height;
+			view.update()
 		},
 		update : function(){
-			view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
-			view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
-			view.viewWidth = view.x + view.tileEngine.width;
-			view.viewHeight = view.y + view.tileEngine.height;
+			if(view.tileEngine.active_controller != view.tileEngine.keyboard){
+				view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
+				view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
+				view.viewWidth = view.x + view.tileEngine.width;
+				view.viewHeight = view.y + view.tileEngine.height;
+			}
 		},
 		isInView: function(check){
 			return (check.x+check.width > this.x && check.x <= this.viewWidth)&&(check.y+check.height > this.y && check.y <= this.viewHeight)
@@ -466,8 +481,7 @@ function newTileEngine(){
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
 			TileEngine.view.update();
-			TileEngine.mouse.update();
-			TileEngine.keyboard.update();
+			TileEngine.active_controller ? TileEngine.active_controller.update():null
 			TileEngine.main_sprite.update();
 			if(TileEngine.zones){
 				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
