@@ -29,7 +29,8 @@ function newPhysicsEngine(){
 		},
 		position_handler: function(event, evnt_obj){
 			var x = evnt_obj.sprite.x,
-					y = evnt_obj.sprite.y;
+					y = evnt_obj.sprite.y,
+					x_top, x_bottom, y_top, y_bottom;
 			if(evnt_obj.dx >= 0){
 				x += evnt_obj.sprite.width + evnt_obj.dx
 			}else{
@@ -41,13 +42,24 @@ function newPhysicsEngine(){
 				y -= evnt_obj.dy - physics_engine.tile_height
 			}
 			
-			x = (Math.round(x / physics_engine.tile_width) * physics_engine.tile_width+physics_engine.map_width)%physics_engine.map_width
-			y = (Math.round(y / physics_engine.tile_height) * physics_engine.tile_height+physics_engine.map_height)%physics_engine.map_height
+			x	= (Math.round(x / physics_engine.tile_width) * physics_engine.tile_width+physics_engine.map_width)%physics_engine.map_width
+			y	= (Math.round(y / physics_engine.tile_height) * physics_engine.tile_height+physics_engine.map_height)%physics_engine.map_height
 			
-			if(physics_engine.tiles[x][y].physicsID != 1){
-				evnt_obj.sprite.x += evnt_obj.dx;
-				evnt_obj.sprite.y -= evnt_obj.dy;
-			}
+			x_top 		= ((x + physics_engine.tile_width) + physics_engine.map_width) % physics_engine.map_width
+			x 				= ( x + physics_engine.map_width)  % physics_engine.map_width 
+			x_bottom 	= ((x - physics_engine.tile_width) + physics_engine.map_width) % physics_engine.map_width
+			y_top			= ((y + physics_engine.tile_height) + physics_engine.map_height ) % physics_engine.map_height
+			y					= ( y + physics_engine.map_height) % physics_engine.map_height
+			y_bottom	= ((y - physics_engine.tile_height) + physics_engine.map_height ) % physics_engine.map_height
+			
+			physics_engine.tiles[x][y].darker = 0.5;
+			physics_engine.tiles[x_top][y].darker = 0.5;
+			physics_engine.tiles[x_bottom][y].darker = 0.5;
+			physics_engine.tiles[x][y_top].darker = 0.5;
+			physics_engine.tiles[x][y_bottom].darker = 0.5;
+			
+			evnt_obj.sprite.x += evnt_obj.dx;
+			evnt_obj.sprite.y -= evnt_obj.dy;
 			
 			$("#block").html(x.toFixed(2) + "," + y.toFixed(2))
 		},
@@ -370,6 +382,7 @@ function newTile(){
 		baseSourceIndex: 0, //index of tile source in tile engine's source array
 		decorationIndex: 0,
 		physicsID: 0,
+		darker:0,
 		init: function(x, y, width, height, source){ //initialize sprite
 			Tile.x = x;
 			Tile.y = y;
@@ -447,6 +460,11 @@ function newZone(){
 					var check_tile = Zone.tiles[i];
 					if(view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.baseSourceIndex]){
 						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.baseSourceIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
+						if(check_tile.darker != 0){
+							Zone.ctx.fillStyle = "rgba(0,0,0," + check_tile.darker + ")";    
+							Zone.ctx.fillRect(check_tile.local_x,check_tile.local_y,Zone.tileEngine.tileWidth, Zone.tileEngine.tileHeight);
+							check_tile.darker = 0;
+						}
 					}
 				}
 			}
