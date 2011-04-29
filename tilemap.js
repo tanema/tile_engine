@@ -1,7 +1,7 @@
 /*
 	Lightweight Tile Engine For HTML5 Game Creation
     Copyright (C) 2010  John Graham
-	Copyright (C) 2011  Tim Anema
+	  Copyright (C) 2011  Tim Anema
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,6 +16,47 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+function newPhysicsEngine(){
+	var physics_engine = {
+		tiles: 0, tile_width: 0, tile_height: 0,
+		init: function(TileEngine){
+			physics_engine.tiles = TileEngine.tiles
+			physics_engine.tile_width = TileEngine.tileWidth 
+			physics_engine.tile_height = TileEngine.tileHeight
+			physics_engine.map_width = TileEngine.mapWidth 
+			physics_engine.map_height = TileEngine.mapHeight
+		},
+		position_handler: function(event, evnt_obj){
+			var x = evnt_obj.sprite.x,
+					y = evnt_obj.sprite.y;
+			if(evnt_obj.dx >= 0){
+				x += evnt_obj.sprite.width + evnt_obj.dx
+			}else{
+				x += evnt_obj.dx - physics_engine.tile_width
+			}
+			if(evnt_obj.dy >= 0){
+				y -= evnt_obj.sprite.height + evnt_obj.dy
+			}else{
+				y -= evnt_obj.dy - physics_engine.tile_height
+			}
+			
+			x = (Math.round(x / physics_engine.tile_width) * physics_engine.tile_width+physics_engine.map_width)%physics_engine.map_width
+			y = (Math.round(y / physics_engine.tile_height) * physics_engine.tile_height+physics_engine.map_height)%physics_engine.map_height
+			
+			if(physics_engine.tiles[x][y].physicsID != 1){
+				evnt_obj.sprite.x += evnt_obj.dx;
+				evnt_obj.sprite.y -= evnt_obj.dy;
+			}
+			
+			$("#block").html(x.toFixed(2) + "," + y.toFixed(2))
+		},
+		add_actor: function(container){
+			$(container).bind('position_changes', physics_engine.position_handler)
+		},
+	}
+	return physics_engine;
+}
 
 function newMouse(){
 	var Mouse = {
@@ -59,8 +100,12 @@ function newMouse(){
 			update: function(){
 				Mouse.vel_x = (Mouse.vel_x + (this.accelx / 10)) * 0.96;
 				Mouse.vel_y = (Mouse.vel_y + (this.accely / 10)) * 0.96;
-				Mouse.view.x -= Mouse.vel_x;
-				Mouse.view.y -= Mouse.vel_y;
+				
+				Mouse.view.x = Mouse.view.tileEngine.renderCircular ? (Mouse.view.x-Mouse.vel_x)%Mouse.view.tileEngine.mapWidth:(Mouse.view.x-Mouse.vel_x)
+				Mouse.view.y = Mouse.view.tileEngine.renderCircular ? (Mouse.view.y-Mouse.vel_y)%Mouse.view.tileEngine.mapHeight:(Mouse.view.y-Mouse.vel_y)
+				Mouse.view.viewWidth = Mouse.view.x + Mouse.view.tileEngine.width;
+				Mouse.view.viewHeight = Mouse.view.y + Mouse.view.tileEngine.height;
+				
 				if(!Mouse.tileEngine.renderCircular){
 					if(Mouse.view.x < 0 && !this.isDown())
 						Mouse.vel_x -= 0.1;
@@ -71,21 +116,26 @@ function newMouse(){
 					if(Mouse.view.viewHeight > Mouse.tileEngine.mapHeight && !this.isDown()) 
 						Mouse.vel_y += 0.1;
 				}
+				
 				this.reset();
 			}
 	};
 	return Mouse;
 }
+
 function newKeyboard(){
 	var keyboard = {
 		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
 		thrust: .3,	decay: .97,	maxSpeed: 1, speedX: 0,speedY: 0,
 		view: 0, tile_engine:0, offset_x: 0, offset_y: 0, x:0, y:0,
+		width:0, height: 0,
 		init: function(TileEngine, to_move) {
 			keyboard.ctx = TileEngine.canvas;
 			keyboard.tile_engine = TileEngine;
 			keyboard.actor = to_move;
+			keyboard.width = to_move.width;
+			keyboard.height = to_move.height;
 			keyboard.offset_x = TileEngine.width * 0.5;
 			keyboard.offset_y = TileEngine.height * 0.5;
 			$(keyboard.ctx).mouseup(function(event){keyboard.ctx_click = true;})
@@ -96,7 +146,6 @@ function newKeyboard(){
 					})
 					.keyup(function(event){
 						keyboard.orientation[event.keyCode] = false;
-						//keyboard.tile_engine.active_controller = keyboard.tile_engine.mouse
 					})
 					.mousedown(function(event){keyboard.doc_click = true;})
 					.mouseup(function(event){
@@ -132,12 +181,14 @@ function newKeyboard(){
 					keyboard.speedX *= keyboard.maxSpeed/currentSpeed;
 					keyboard.speedY *= keyboard.maxSpeed/currentSpeed;
 				}
-				// Move _player based on calculations above
-				keyboard.actor.x += keyboard.speedX;
-				keyboard.actor.y -= keyboard.speedY;
-				keyboard.x += keyboard.speedX;
-				keyboard.y -= keyboard.speedY;
 				
+				$(keyboard.actor).trigger('position_changes', {
+					sprite: keyboard,
+					dx: keyboard.speedX,
+					dy: keyboard.speedY
+				});
+				
+				//this is kind of hacky but when the view changes so does the view co-ord
 				if(keyboard.tile_engine.renderCircular){
 					if(keyboard.tile_engine.view.x >= keyboard.tile_engine.mapWidth){
 						keyboard.tile_engine.view.x = 0
@@ -156,6 +207,10 @@ function newKeyboard(){
 						keyboard.y += keyboard.tile_engine.mapHeight
 					}
 				}
+				
+				keyboard.actor.x = (keyboard.x+keyboard.tile_engine.mapWidth)%keyboard.tile_engine.mapWidth
+				keyboard.actor.y = (keyboard.y+keyboard.tile_engine.mapHeight)%keyboard.tile_engine.mapHeight
+				
 				keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
 				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
 				keyboard.tile_engine.view.x += (keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.02
@@ -175,12 +230,10 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 			view.update()
 		},
 		update : function(){
-			if(view.tileEngine.active_controller != view.tileEngine.keyboard){
-				view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
-				view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
-				view.viewWidth = view.x + view.tileEngine.width;
-				view.viewHeight = view.y + view.tileEngine.height;
-			}
+			view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
+			view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
+			view.viewWidth = view.x + view.tileEngine.width;
+			view.viewHeight = view.y + view.tileEngine.height;
 		},
 		isInView: function(check){
 			return (check.x+check.width > this.x && check.x <= this.viewWidth)&&(check.y+check.height > this.y && check.y <= this.viewHeight)
@@ -268,9 +321,10 @@ function newSprite(){
 			Sprite.current_direction = Sprite.sourceHash.up
 		},
 		update: function(){
+			//kind of deprecated
 			if(Sprite.tileEngine.renderCircular){
-				Sprite.x = (Sprite.x >= 0 ? Sprite.x%Sprite.tileEngine.mapWidth:Sprite.x+Sprite.tileEngine.mapWidth)
-				Sprite.y = (Sprite.y >= 0 ? Sprite.y%Sprite.tileEngine.mapHeight:Sprite.y+Sprite.tileEngine.mapHeight)
+				Sprite.x = (Sprite.x+Sprite.tileEngine.mapWidth)%Sprite.tileEngine.mapWidth
+				Sprite.y = (Sprite.y+Sprite.tileEngine.mapHeight)%Sprite.tileEngine.mapHeight
 			}
 		},
 		current_frame: function(){
@@ -366,16 +420,21 @@ function newZone(){
 		addTile: function(tile){
 			Zone.tiles.push(tile);	
 		},
-		arrangeTiles: function(){
+		arrangeTiles: function(tiles_a){
 			var tiles_wide = Zone.width / Zone.tileWidth,
 					tiles_high = Zone.height / Zone.tileHeight,
 					index = 0;
 			for(var i = 0; i < tiles_high; i++){
 				for(var j = 0; j < tiles_wide; j++){
-					Zone.tiles[index].x = j * Zone.tileWidth + Zone.x;
-					Zone.tiles[index].y = i * Zone.tileHeight + Zone.y;
+					var temp_x = j * Zone.tileWidth + Zone.x,
+							temp_y = i * Zone.tileHeight + Zone.y;
+					Zone.tiles[index].x = temp_x
+					Zone.tiles[index].y = temp_y
 					Zone.tiles[index].local_x = j * Zone.tileWidth;
 					Zone.tiles[index].local_y = i * Zone.tileHeight;
+					if(!tiles_a[temp_x])
+						tiles_a[temp_x] = new Array()
+					tiles_a[temp_x][temp_y] = Zone.tiles[index]
 					index++;
 				}
 			}
@@ -412,13 +471,12 @@ function newZone(){
 	};
 	return Zone;
 }
-	
 
 function newTileEngine(){
 	var TileEngine = { //main canvas and demo container
 		canvas: 0, //main canvas object
 		ctx: 0, //main canvas drawing context
-		tiles: 0, //array of tiles
+		tiles: 0, //double dimenal array by coordinates
 		zones: 0, //array of tile zones
 		tileSource: 0, //array of tile source objects, one for each unique tile
 		width: 0, //width of tile map
@@ -434,8 +492,9 @@ function newTileEngine(){
 		sprites: 0,
 		main_sprite: 0,
 		tilesArray: 0,
-		mouse: 0,
-		keyboard: 0,
+		mouse: newMouse(),
+		keyboard: newKeyboard(),
+		physics_engine: newPhysicsEngine(),
 		renderCircular: false,
 		timeofDay: 0.2,
 		view : 0,
@@ -443,13 +502,10 @@ function newTileEngine(){
 		init: function(){ //initialize experiment
 			if(!TileEngine.view)
 				alert("please set map attributes before initializing tile engine");
-			TileEngine.mouse = newMouse();
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
-			TileEngine.keyboard = newKeyboard();
 			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
-			TileEngine.tiles = new Array();
-			TileEngine.zones = new Array();
 			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
+			TileEngine.physics_engine.init(TileEngine)
 		},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
@@ -477,12 +533,11 @@ function newTileEngine(){
 		setMainSpriteAttributes: function(obj){ 
 			TileEngine.main_sprite = newSprite();
 			TileEngine.main_sprite.init(obj.init_x, obj.init_y, TileEngine.tileWidth, TileEngine.tileHeight, obj.movement_hash, TileEngine)
+			TileEngine.physics_engine.add_actor(TileEngine.main_sprite);
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
-			TileEngine.view.update();
-			TileEngine.active_controller ? TileEngine.active_controller.update():null
-			TileEngine.main_sprite.update();
+			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update()
 			if(TileEngine.zones){
 				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
 			}
@@ -587,6 +642,7 @@ function newTileEngine(){
 			return source_array;
 		},
 		createZones: function(){//create array of zones for map
+			TileEngine.zones = new Array();
 			//caluculate how many zones we need (width by height)
 			var zone_wide = Math.ceil(TileEngine.tilesWide/TileEngine.zoneTilesWide);
 			var zone_high = Math.ceil(TileEngine.tilesHigh/TileEngine.zoneTilesHigh);
@@ -645,12 +701,13 @@ function newTileEngine(){
 				}
 				 x_zone = 0; //reset horizontal position when we loop to new row
 			}
-			
+			TileEngine.tiles = new Array();
 			for(var j = 0, jj = TileEngine.zones.length; j < jj; j++){
-				TileEngine.zones[j].arrangeTiles(); //go throughh and arange x and y positions of tiles in zones
+				TileEngine.zones[j].arrangeTiles(TileEngine.tiles); //go throughh and arange x and y positions of tiles in zones
 			}
 		}
 	}
+	
 	return TileEngine;
 };
 
