@@ -39,9 +39,8 @@ function newPhysicsEngine(){
 				var this_y = y,
 						this_x = (evnt_obj.dx > 0) ? physics_engine.to_unit(x+evnt_obj.sprite.width, evnt_obj.dx, physics_engine.tile_width, physics_engine.map_width) : x
 				do{
-					//this_y = physics_engine.to_unit(this_y, 0, physics_engine.tile_height, physics_engine.map_height)
-					physics_engine.tiles[this_x][this_y].darker = 0.4;
-					if(physics_engine.tiles[this_x][this_y].physicsID != 0)
+					physics_engine.tiles[this_x][physics_engine.to_unit(this_y, 0, physics_engine.tile_height, physics_engine.map_height)].darker = 0.4;
+					if(physics_engine.tiles[this_x][physics_engine.to_unit(this_y, 0, physics_engine.tile_height, physics_engine.map_height)].physicsID != 0)
 						return;
 				}while((this_y += physics_engine.tile_height) < (evnt_obj.sprite.y + evnt_obj.sprite.height))
 			}
@@ -50,13 +49,12 @@ function newPhysicsEngine(){
 				var this_x = x
 						this_y = (evnt_obj.dy < 0) ? physics_engine.to_unit(y+evnt_obj.sprite.height+1, evnt_obj.dy, physics_engine.tile_height, physics_engine.map_height) : y
 				do{
-					//this_x = physics_engine.to_unit(this_x, 0, physics_engine.tile_width, physics_engine.map_width)
-					physics_engine.tiles[this_x][this_y].darker = 0.4;
-					if(physics_engine.tiles[this_x][this_y].physicsID != 0)
+					physics_engine.tiles[physics_engine.to_unit(this_x, 0, physics_engine.tile_width, physics_engine.map_width)][this_y].darker = 0.4;
+					if(physics_engine.tiles[physics_engine.to_unit(this_x, 0, physics_engine.tile_width, physics_engine.map_width)][this_y].physicsID != 0)
 						return;
 				}while((this_x += physics_engine.tile_width) < (evnt_obj.sprite.x + evnt_obj.sprite.width))
 			}
-			$("#block").html(evnt_obj.sprite.height)
+			//$("#block").html()
 			//physics_engine.tiles[x][y].darker = 0.4;
 			evnt_obj.sprite.x += evnt_obj.dx;
 			evnt_obj.sprite.y -= evnt_obj.dy;
