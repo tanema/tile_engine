@@ -27,45 +27,43 @@ function newPhysicsEngine(){
 			physics_engine.map_width = TileEngine.mapWidth 
 			physics_engine.map_height = TileEngine.mapHeight
 		},
+		to_unit: function(i, d, unit, span){
+			i = Math.floor((i+d) / unit)
+			return ((i * unit) + span) % span
+		},
 		position_handler: function(event, evnt_obj){
-			var x = evnt_obj.sprite.x,
-					y = evnt_obj.sprite.y,
-					x_top, x_bottom, y_top, y_bottom;
-			if(evnt_obj.dx >= 0){
-				x += evnt_obj.sprite.width + evnt_obj.dx
-			}else{
-				x += evnt_obj.dx - physics_engine.tile_width
+			var x = physics_engine.to_unit(evnt_obj.sprite.x, evnt_obj.dx, physics_engine.tile_width, physics_engine.map_width),
+					y = physics_engine.to_unit(evnt_obj.sprite.y, evnt_obj.dy, physics_engine.tile_height, physics_engine.map_height);
+					
+			if((Math.round(evnt_obj.dx*2)/2)!= 0){
+				var this_y = y,
+						this_x = (evnt_obj.dx > 0) ? physics_engine.to_unit(x+evnt_obj.sprite.width, evnt_obj.dx, physics_engine.tile_width, physics_engine.map_width) : x
+				do{
+					//this_y = physics_engine.to_unit(this_y, 0, physics_engine.tile_height, physics_engine.map_height)
+					physics_engine.tiles[this_x][this_y].darker = 0.4;
+					if(physics_engine.tiles[this_x][this_y].physicsID != 0)
+						return;
+				}while((this_y += physics_engine.tile_height) < (evnt_obj.sprite.y + evnt_obj.sprite.height))
 			}
-			if(evnt_obj.dy >= 0){
-				y -= evnt_obj.sprite.height + evnt_obj.dy
-			}else{
-				y -= evnt_obj.dy - physics_engine.tile_height
+			
+			if((Math.round(evnt_obj.dy*2)/2) != 0){
+				var this_x = x
+						this_y = (evnt_obj.dy < 0) ? physics_engine.to_unit(y+evnt_obj.sprite.height+1, evnt_obj.dy, physics_engine.tile_height, physics_engine.map_height) : y
+				do{
+					//this_x = physics_engine.to_unit(this_x, 0, physics_engine.tile_width, physics_engine.map_width)
+					physics_engine.tiles[this_x][this_y].darker = 0.4;
+					if(physics_engine.tiles[this_x][this_y].physicsID != 0)
+						return;
+				}while((this_x += physics_engine.tile_width) < (evnt_obj.sprite.x + evnt_obj.sprite.width))
 			}
-			
-			x	= (Math.round(x / physics_engine.tile_width) * physics_engine.tile_width+physics_engine.map_width)%physics_engine.map_width
-			y	= (Math.round(y / physics_engine.tile_height) * physics_engine.tile_height+physics_engine.map_height)%physics_engine.map_height
-			
-			x_top 		= ((x + physics_engine.tile_width) + physics_engine.map_width) % physics_engine.map_width
-			x 				= ( x + physics_engine.map_width)  % physics_engine.map_width 
-			x_bottom 	= ((x - physics_engine.tile_width) + physics_engine.map_width) % physics_engine.map_width
-			y_top			= ((y + physics_engine.tile_height) + physics_engine.map_height ) % physics_engine.map_height
-			y					= ( y + physics_engine.map_height) % physics_engine.map_height
-			y_bottom	= ((y - physics_engine.tile_height) + physics_engine.map_height ) % physics_engine.map_height
-			
-			physics_engine.tiles[x][y].darker = 0.5;
-			physics_engine.tiles[x_top][y].darker = 0.5;
-			physics_engine.tiles[x_bottom][y].darker = 0.5;
-			physics_engine.tiles[x][y_top].darker = 0.5;
-			physics_engine.tiles[x][y_bottom].darker = 0.5;
-			
+			$("#block").html(evnt_obj.sprite.height)
+			//physics_engine.tiles[x][y].darker = 0.4;
 			evnt_obj.sprite.x += evnt_obj.dx;
 			evnt_obj.sprite.y -= evnt_obj.dy;
-			
-			$("#block").html(x.toFixed(2) + "," + y.toFixed(2))
 		},
 		add_actor: function(container){
 			$(container).bind('position_changes', physics_engine.position_handler)
-		},
+		}
 	}
 	return physics_engine;
 }
@@ -141,6 +139,7 @@ function newKeyboard(){
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
 		thrust: .3,	decay: .97,	maxSpeed: 1, speedX: 0,speedY: 0,
 		view: 0, tile_engine:0, offset_x: 0, offset_y: 0, x:0, y:0,
+		key_down: false,
 		width:0, height: 0,
 		init: function(TileEngine, to_move) {
 			keyboard.ctx = TileEngine.canvas;
@@ -151,22 +150,29 @@ function newKeyboard(){
 			keyboard.offset_x = TileEngine.width * 0.5;
 			keyboard.offset_y = TileEngine.height * 0.5;
 			$(keyboard.ctx).mouseup(function(event){keyboard.ctx_click = true;})
-			$(document)
-					.keydown(function(event){
-						keyboard.orientation[event.keyCode] = true;
-						keyboard.tile_engine.active_controller = keyboard;
-					})
-					.keyup(function(event){
-						keyboard.orientation[event.keyCode] = false;
-					})
-					.mousedown(function(event){keyboard.doc_click = true;})
-					.mouseup(function(event){
-						keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
-						$('canvas').css("border", (keyboard._focus ? "2px solid lightblue":""))
-						keyboard.x = keyboard.actor.x;
-						keyboard.y = keyboard.actor.y;
-						keyboard.doc_click = keyboard.ctx_click = false;
-					})
+			$(document).keydown(function(event){keyboard.keydown(event)})
+								 .keyup(function(event){keyboard.keyup(event)})
+								 .mousedown(function(event){keyboard.mousedown(event)})
+								 .mouseup(function(event){keyboard.mouseup(event)})
+		},
+		keydown: function (){
+			keyboard.orientation[event.keyCode] = true;
+			keyboard.tile_engine.active_controller = keyboard;
+			keyboard.key_down = true;
+		},
+		keyup: function (){
+			keyboard.orientation[event.keyCode] = false;
+			keyboard.key_down = false;
+		},
+		mousedown: function (){
+			keyboard.doc_click = true;
+		},
+		mouseup: function (){
+			keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
+			$('canvas').css("border", (keyboard._focus ? "2px solid lightblue":""))
+			keyboard.x = keyboard.actor.x;
+			keyboard.y = keyboard.actor.y;
+			keyboard.doc_click = keyboard.ctx_click = false;
 		},
 		update: function (){
 			if(keyboard._focus){
@@ -200,7 +206,6 @@ function newKeyboard(){
 					dy: keyboard.speedY
 				});
 				
-				//this is kind of hacky but when the view changes so does the view co-ord
 				if(keyboard.tile_engine.renderCircular){
 					if(keyboard.tile_engine.view.x >= keyboard.tile_engine.mapWidth){
 						keyboard.tile_engine.view.x = 0
@@ -220,11 +225,12 @@ function newKeyboard(){
 					}
 				}
 				
-				keyboard.actor.x = (keyboard.x+keyboard.tile_engine.mapWidth)%keyboard.tile_engine.mapWidth
-				keyboard.actor.y = (keyboard.y+keyboard.tile_engine.mapHeight)%keyboard.tile_engine.mapHeight
+				keyboard.actor.x = (keyboard.tile_engine.renderCircular) ? (keyboard.x+keyboard.tile_engine.mapWidth)%keyboard.tile_engine.mapWidth : keyboard.actor.x
+				keyboard.actor.y = (keyboard.tile_engine.renderCircular) ? (keyboard.y+keyboard.tile_engine.mapHeight)%keyboard.tile_engine.mapHeight : keyboard.actor.y
 				
 				keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
 				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
+				
 				keyboard.tile_engine.view.x += (keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.02
 				keyboard.tile_engine.view.y += (keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.01
 			}
@@ -550,7 +556,7 @@ function newTileEngine(){
 		},
 		setMainSpriteAttributes: function(obj){ 
 			TileEngine.main_sprite = newSprite();
-			TileEngine.main_sprite.init(obj.init_x, obj.init_y, TileEngine.tileWidth, TileEngine.tileHeight, obj.movement_hash, TileEngine)
+			TileEngine.main_sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, TileEngine)
 			TileEngine.physics_engine.add_actor(TileEngine.main_sprite);
 		},
 		drawFrame: function(){ //main drawing function
@@ -566,6 +572,7 @@ function newTileEngine(){
 			var i = TileEngine.zones.length,
 					validZones = new Array(),
 					views = TileEngine.getCurrentViews(view);
+			//main map
 			while(i--){
 				var check_zone = TileEngine.zones[i],v = views.length;
 				while(v--){
@@ -573,7 +580,7 @@ function newTileEngine(){
 					if(currentView.isInView(check_zone)){
 						validZones.push(check_zone.forDecoration(currentView));
 						check_zone.drawTiles(currentView);
-						TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
+						TileEngine.ctx.drawImage(check_zone.canvas, Math.round((check_zone.x+currentView.xoffset)-view.x), Math.round((check_zone.y+currentView.yoffset)-view.y));
 					}
 				}
 			}
@@ -604,7 +611,7 @@ function newTileEngine(){
 				if(view.isInView(check_zone)){
 					validZones.push(check_zone.forDecoration(view));
 					check_zone.drawTiles(view);
-					TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
+					TileEngine.ctx.drawImage(check_zone.canvas, Math.round(check_zone.x-view.x), Math.round(check_zone.y-view.y));
 				} 
 			}
 			

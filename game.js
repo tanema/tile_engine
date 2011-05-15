@@ -129,8 +129,10 @@ var Game = {
 		Game.tileEngine.setMapAttributes(mapObj);
 		
 		var spriteObj = new Object();
-			spriteObj.init_x = 20;
-			spriteObj.init_y = 20;
+			spriteObj.init_x = 32;
+			spriteObj.init_y = 32;
+			spriteObj.width = 32; 
+			spriteObj.height = 32;
 			spriteObj.movement_hash = {
 				up: 	 [15,16,17,18,19,20,21],
 				down:  [37,38,39,40,41,42,43],
