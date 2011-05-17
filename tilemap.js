@@ -27,37 +27,43 @@ function newPhysicsEngine(){
 			physics_engine.map_width = TileEngine.mapWidth 
 			physics_engine.map_height = TileEngine.mapHeight
 		},
+		inside_map: function(i, span){
+			return (i + span) % span
+		},
 		to_unit: function(i, d, unit, span){
 			i = Math.floor((i+d) / unit)
-			return ((i * unit) + span) % span
+			return physics_engine.inside_map((i * unit),span)
 		},
 		position_handler: function(event, evnt_obj){
-			var x = physics_engine.to_unit(evnt_obj.sprite.x, evnt_obj.dx, physics_engine.tile_width, physics_engine.map_width),
-					y = physics_engine.to_unit(evnt_obj.sprite.y, evnt_obj.dy, physics_engine.tile_height, physics_engine.map_height);
+			var tile_width = physics_engine.tile_width,
+					tile_height = physics_engine.tile_height,
+					map_width = physics_engine.map_width,
+					map_height = physics_engine.map_height,
+					x = physics_engine.to_unit(evnt_obj.sprite.x, evnt_obj.dx, tile_width, map_width),
+					y = physics_engine.to_unit(evnt_obj.sprite.y, evnt_obj.dy, tile_height, map_height);
 					
 			if((Math.round(evnt_obj.dx*2)/2)!= 0){
 				var this_y = y,
-						this_x = (evnt_obj.dx > 0) ? physics_engine.to_unit(x+evnt_obj.sprite.width, evnt_obj.dx, physics_engine.tile_width, physics_engine.map_width) : x,
-						to_y = (evnt_obj.sprite.y+evnt_obj.sprite.height+physics_engine.map_height)%physics_engine.map_height
+						this_x = (evnt_obj.dx > 0) ? physics_engine.to_unit(x+evnt_obj.sprite.width, 0, tile_width, map_width) : x,
+						to_y = physics_engine.inside_map(evnt_obj.sprite.y+evnt_obj.sprite.height,map_height)
 				do{
-					physics_engine.tiles[this_x][(this_y+physics_engine.map_height)%physics_engine.map_height].darker = 0.4;
-					if(physics_engine.tiles[this_x][(this_y+physics_engine.map_height)%physics_engine.map_height].physicsID != 0)
+					physics_engine.tiles[this_x][physics_engine.inside_map(this_y,map_height)].darker = 0.4;
+					if(physics_engine.tiles[this_x][physics_engine.inside_map(this_y,map_height)].physicsID != 0)
 						return;
 				}while((this_y += physics_engine.tile_height) < to_y)
 			}
 			
 			if((Math.round(evnt_obj.dy*2)/2) != 0){
 				var this_x = x
-						this_y = (evnt_obj.dy < 0) ? physics_engine.to_unit(y+evnt_obj.sprite.height+1, evnt_obj.dy, physics_engine.tile_height, physics_engine.map_height) : y,
-						to_x = (evnt_obj.sprite.x + evnt_obj.sprite.width+physics_engine.map_width)%physics_engine.map_width
+						this_y = (evnt_obj.dy < 0) ? physics_engine.to_unit(y+evnt_obj.sprite.height+1, 0, physics_engine.tile_height, physics_engine.map_height) : y,
+						to_x = physics_engine.inside_map(evnt_obj.sprite.x+evnt_obj.sprite.width,physics_engine.map_width)
 				do{
-					physics_engine.tiles[(this_x+physics_engine.map_width)%physics_engine.map_width][this_y].darker = 0.4;
-					if(physics_engine.tiles[(this_x+physics_engine.map_width)%physics_engine.map_width][this_y].physicsID != 0)
+					physics_engine.tiles[physics_engine.inside_map(this_x,map_width)][this_y].darker = 0.4;
+					if(physics_engine.tiles[physics_engine.inside_map(this_x,map_width)][this_y].physicsID != 0)
 						return;
 				}while((this_x += physics_engine.tile_width) < to_x)
 			}
-			$("#block").html(evnt_obj.sprite.height)
-			//physics_engine.tiles[x][y].darker = 0.4;
+			$("#block").html()
 			evnt_obj.sprite.x += evnt_obj.dx;
 			evnt_obj.sprite.y -= evnt_obj.dy;
 		},
