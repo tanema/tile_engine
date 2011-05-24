@@ -18,60 +18,70 @@
 */
 
 function newPhysicsEngine(){
-	var physics_engine = {
+	var p_e = {
 		tiles: 0, tile_width: 0, tile_height: 0,
 		init: function(TileEngine){
-			physics_engine.tiles = TileEngine.tiles
-			physics_engine.tile_width = TileEngine.tileWidth 
-			physics_engine.tile_height = TileEngine.tileHeight
-			physics_engine.map_width = TileEngine.mapWidth 
-			physics_engine.map_height = TileEngine.mapHeight
+			p_e.tiles = TileEngine.tiles
+			p_e.tile_width = TileEngine.tileWidth 
+			p_e.tile_height = TileEngine.tileHeight
+			p_e.map_width = TileEngine.mapWidth 
+			p_e.map_height = TileEngine.mapHeight
 		},
 		inside_map: function(i, span){
 			return (i + span) % span
 		},
 		to_unit: function(i, d, unit, span){
 			i = Math.floor((i+d) / unit)
-			return physics_engine.inside_map((i * unit),span)
+			return p_e.inside_map((i * unit),span)
 		},
 		position_handler: function(event, evnt_obj){
-			var tile_width = physics_engine.tile_width,
-					tile_height = physics_engine.tile_height,
-					map_width = physics_engine.map_width,
-					map_height = physics_engine.map_height,
-					x = physics_engine.to_unit(evnt_obj.sprite.x, evnt_obj.dx, tile_width, map_width),
-					y = physics_engine.to_unit(evnt_obj.sprite.y, evnt_obj.dy, tile_height, map_height);
+			var tile_width = p_e.tile_width,tile_height = p_e.tile_height,
+					map_width = p_e.map_width,map_height = p_e.map_height,
+					x = p_e.to_unit(evnt_obj.sprite.x, evnt_obj.dx, tile_width, map_width),
+					y = p_e.to_unit(evnt_obj.sprite.y, evnt_obj.dy, tile_height, map_height);
 					
 			if((Math.round(evnt_obj.dx*2)/2)!= 0){
 				var this_y = y,
-						this_x = (evnt_obj.dx > 0) ? physics_engine.to_unit(x+evnt_obj.sprite.width, 0, tile_width, map_width) : x,
-						to_y = physics_engine.inside_map(evnt_obj.sprite.y+evnt_obj.sprite.height,map_height)
+						this_x = (evnt_obj.dx > 0) ? p_e.to_unit(x+evnt_obj.sprite.width, 0, tile_width, map_width) : x,
+						to_y = p_e.inside_map(evnt_obj.sprite.y+evnt_obj.sprite.height,map_height)
+				
+				if(this_y > to_y){
+					do{
+						if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0)
+							return;
+					}while((this_y += p_e.tile_height) < map_height)
+					to_y = 0;
+				}
 				do{
-					physics_engine.tiles[this_x][physics_engine.inside_map(this_y,map_height)].darker = 0.4;
-					if(physics_engine.tiles[this_x][physics_engine.inside_map(this_y,map_height)].physicsID != 0)
+					if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0)
 						return;
-				}while((this_y += physics_engine.tile_height) < to_y)
+				}while((this_y += p_e.tile_height) < to_y)
 			}
 			
 			if((Math.round(evnt_obj.dy*2)/2) != 0){
 				var this_x = x
-						this_y = (evnt_obj.dy < 0) ? physics_engine.to_unit(y+evnt_obj.sprite.height+1, 0, physics_engine.tile_height, physics_engine.map_height) : y,
-						to_x = physics_engine.inside_map(evnt_obj.sprite.x+evnt_obj.sprite.width,physics_engine.map_width)
+						this_y = (evnt_obj.dy < 0) ? p_e.to_unit(y+evnt_obj.sprite.height+1, 0, p_e.tile_height, map_height) : y,
+						to_x = p_e.inside_map(evnt_obj.sprite.x+evnt_obj.sprite.width,map_width)
+				if(this_x > to_x){
+					do{
+						if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0)
+							return;
+					}while((this_x += p_e.tile_width) < map_width)
+					this_x = 0;
+				}
 				do{
-					physics_engine.tiles[physics_engine.inside_map(this_x,map_width)][this_y].darker = 0.4;
-					if(physics_engine.tiles[physics_engine.inside_map(this_x,map_width)][this_y].physicsID != 0)
+					if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0)
 						return;
-				}while((this_x += physics_engine.tile_width) < to_x)
+				}while((this_x += p_e.tile_width) < to_x)
 			}
-			$("#block").html()
 			evnt_obj.sprite.x += evnt_obj.dx;
 			evnt_obj.sprite.y -= evnt_obj.dy;
 		},
 		add_actor: function(container){
-			$(container).bind('position_changes', physics_engine.position_handler)
+			$(container).bind('position_changes', p_e.position_handler)
 		}
 	}
-	return physics_engine;
+	return p_e;
 }
 
 function newMouse(){
@@ -394,7 +404,6 @@ function newTile(){
 		baseSourceIndex: 0, //index of tile source in tile engine's source array
 		decorationIndex: 0,
 		physicsID: 0,
-		darker:0,
 		init: function(x, y, width, height, source){ //initialize sprite
 			Tile.x = x;
 			Tile.y = y;
@@ -472,11 +481,6 @@ function newZone(){
 					var check_tile = Zone.tiles[i];
 					if(view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.baseSourceIndex]){
 						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.baseSourceIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
-						if(check_tile.darker != 0){
-							Zone.ctx.fillStyle = "rgba(0,0,0," + check_tile.darker + ")";    
-							Zone.ctx.fillRect(check_tile.local_x,check_tile.local_y,Zone.tileEngine.tileWidth, Zone.tileEngine.tileHeight);
-							check_tile.darker = 0;
-						}
 					}
 				}
 			}
