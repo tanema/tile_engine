@@ -133,6 +133,9 @@ var Game = {
 			spriteObj.init_y = 32;
 			spriteObj.width = 32; 
 			spriteObj.height = 32;
+			spriteObj.sourceFile = 'tiles.png';
+			spriteObj.sourceTileCounts = 254;
+			spriteObj.sourceTileAccross = 22;
 			spriteObj.movement_hash = {
 				up: 	 [15,16,17,18,19,20,21],
 				down:  [37,38,39,40,41,42,43],

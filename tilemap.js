@@ -525,6 +525,7 @@ function newTileEngine(){
 		mapHeight: 0,
 		sprites: 0,
 		main_sprite: 0,
+		spriteSource: 0,
 		tilesArray: 0,
 		mouse: newMouse(),
 		keyboard: newKeyboard(),
@@ -568,6 +569,11 @@ function newTileEngine(){
 			TileEngine.main_sprite = newSprite();
 			TileEngine.main_sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, TileEngine)
 			TileEngine.physics_engine.add_actor(TileEngine.main_sprite);
+			var source = newSourceImage();  
+			source.init(obj.sourceFile);
+			source.image.onload = function(){  //event handler for image load 
+				TileEngine.spriteSource = TileEngine.createTileSource(obj.sourceTileCounts, obj.sourceTileAccross, source);	//create tile sources using image source		
+			}
 		},
 		drawFrame: function(){ //main drawing function
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
@@ -599,7 +605,7 @@ function newTileEngine(){
 			while(v--){
 				var currentView = views[v];
 				if(currentView.isInView(TileEngine.main_sprite)){
-					TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_frame()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
+					TileEngine.ctx.drawImage(TileEngine.spriteSource[TileEngine.main_sprite.current_frame()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
 				}
 			}
 			
@@ -627,7 +633,7 @@ function newTileEngine(){
 			
 			//main_sprite
 			if(view.isInView(TileEngine.main_sprite))
-				TileEngine.ctx.drawImage(TileEngine.tileSource[TileEngine.main_sprite.current_frame()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
+				TileEngine.ctx.drawImage(TileEngine.spriteSource[TileEngine.main_sprite.current_frame()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
 			
 			//decorations
 			i = validZones.length;
