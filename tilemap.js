@@ -241,8 +241,8 @@ function newKeyboard(){
 					}
 				}
 				
-				keyboard.actor.x = (keyboard.tile_engine.renderCircular) ? (keyboard.x+keyboard.tile_engine.mapWidth)%keyboard.tile_engine.mapWidth : keyboard.actor.x
-				keyboard.actor.y = (keyboard.tile_engine.renderCircular) ? (keyboard.y+keyboard.tile_engine.mapHeight)%keyboard.tile_engine.mapHeight : keyboard.actor.y
+				keyboard.actor.x = (keyboard.tile_engine.renderCircular) ? (keyboard.x+keyboard.tile_engine.mapWidth)%keyboard.tile_engine.mapWidth : keyboard.x
+				keyboard.actor.y = (keyboard.tile_engine.renderCircular) ? (keyboard.y+keyboard.tile_engine.mapHeight)%keyboard.tile_engine.mapHeight : keyboard.y
 				
 				keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
 				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
@@ -496,7 +496,8 @@ function newZone(){
 				var i = Zone.tiles.length;
 				while(i--){
 					var check_tile = Zone.tiles[i];
-					if(view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.decorationIndex]){
+					//decoration cannot be at tile 0
+					if(check_tile.decorationIndex != 0 && view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.decorationIndex]){
 						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.decorationIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
 					}
 				}
@@ -534,6 +535,7 @@ function newTileEngine(){
 		timeofDay: 0.2,
 		view : 0,
 		active_controller: 0,
+		initialized: false,
 		init: function(){ //initialize experiment
 			if(!TileEngine.view)
 				alert("please set map attributes before initializing tile engine");
@@ -541,6 +543,7 @@ function newTileEngine(){
 			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
 			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
 			TileEngine.physics_engine.init(TileEngine)
+			TileEngine.initialized = true;
 		},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
@@ -562,7 +565,7 @@ function newTileEngine(){
 			var source = newSourceImage();  
 			source.init(obj.sourceFile);
 			source.image.onload = function(){  //event handler for image load 
-				TileEngine.tileSource = TileEngine.createTileSource(obj.sourceTileCounts, obj.sourceTileAccross, source);	//create tile sources using image source		
+				TileEngine.tileSource = TileEngine.createTileSource(obj.tileWidth, obj.tileHeight, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
 		},
 		setMainSpriteAttributes: function(obj){ 
@@ -572,10 +575,12 @@ function newTileEngine(){
 			var source = newSourceImage();  
 			source.init(obj.sourceFile);
 			source.image.onload = function(){  //event handler for image load 
-				TileEngine.spriteSource = TileEngine.createTileSource(obj.sourceTileCounts, obj.sourceTileAccross, source);	//create tile sources using image source		
+				TileEngine.spriteSource = TileEngine.createTileSource(obj.width, obj.height, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
 		},
 		drawFrame: function(){ //main drawing function
+			if(!TileEngine.initialized)//still loading
+				return
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
 			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update()
 			if(TileEngine.zones){
@@ -604,7 +609,7 @@ function newTileEngine(){
 			var v = views.length;
 			while(v--){
 				var currentView = views[v];
-				if(currentView.isInView(TileEngine.main_sprite)){
+				if(TileEngine.spriteSource && currentView.isInView(TileEngine.main_sprite)){
 					TileEngine.ctx.drawImage(TileEngine.spriteSource[TileEngine.main_sprite.current_frame()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
 				}
 			}
@@ -632,7 +637,7 @@ function newTileEngine(){
 			}
 			
 			//main_sprite
-			if(view.isInView(TileEngine.main_sprite))
+			if(TileEngine.spriteSource && view.isInView(TileEngine.main_sprite))
 				TileEngine.ctx.drawImage(TileEngine.spriteSource[TileEngine.main_sprite.current_frame()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
 			
 			//decorations
@@ -663,21 +668,24 @@ function newTileEngine(){
 			if(down)views.push(view.down());
 			return views;
 		},
-		createTileSource: function(count, accross, source){ //create tiles sources
-			var source_array = new Array();
-			var accross_count = 0;
-			var x = 0;
-			var y = 0;
+		createTileSource: function(tileWidth, tileHeight, count, accross, offset_x, offset_y, source){ //create tiles sources
+			var source_array = new Array(),
+					accross_count = 0,x = 0,y = 0,
+					offset_x_count = 0, offset_y_count = 0;
+			
 			for(var i = 0; i < count; i++){
 				var new_tileSource = newTileSource();
-				new_tileSource.init(TileEngine.tileWidth, TileEngine.tileHeight, x, y, source);
+				new_tileSource.init(tileWidth, tileHeight,x+(offset_x*offset_x_count), y+(offset_y*offset_y_count), source);
 				source_array.push(new_tileSource);
 				accross_count++;
-				x += TileEngine.tileWidth;
+				x += tileWidth;
+				offset_x_count++;
 				if(accross_count >= accross){
 					accross_count = 0;
-					y += TileEngine.tileHeight;
+					y += tileHeight;
+					offset_y_count++;
 					x = 0;
+					offset_x_count = 0;
 				}
 			}
 			return source_array;
