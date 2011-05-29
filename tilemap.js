@@ -390,7 +390,7 @@ function newSprite(){
 };
 
 function getBytes(num) {
-    return [num & 0xF, (num >> 4) & 0xFFFF, (num >> 20) & 0xFFFF];
+	return [num & 0x3FFFF, (num >> 18) & 0x3FFFF];//return [num & 0xF, (num >> 4) & 0xFFFF, (num >> 20) & 0xFFFF];
 };
 /*** function to create and then return a new Tile object */
 function newTile(){
@@ -404,15 +404,15 @@ function newTile(){
 		baseSourceIndex: 0, //index of tile source in tile engine's source array
 		decorationIndex: 0,
 		physicsID: 0,
-		init: function(x, y, width, height, source){ //initialize sprite
+		init: function(x, y, width, height, source_index, physics_id){ //initialize sprite
 			Tile.x = x;
 			Tile.y = y;
 			Tile.width = width;
 			Tile.height = height;
-			var sourceNumbers = getBytes(source)
-			Tile.baseSourceIndex = sourceNumbers[2]; // set index of tile source for this tile
-			Tile.decorationIndex = sourceNumbers[1]; 
-			Tile.physicsID = sourceNumbers[0]; 
+			var sourceNumbers = getBytes(source_index)
+			Tile.baseSourceIndex = sourceNumbers[1]; // set index of tile source for this tile
+			Tile.decorationIndex = sourceNumbers[0]; 
+			Tile.physicsID = physics_id || 0; 
 		}
 	};
 	return Tile;  //returns newly created sprite object
@@ -527,7 +527,6 @@ function newTileEngine(){
 		sprites: 0,
 		main_sprite: 0,
 		spriteSource: 0,
-		tilesArray: 0,
 		mouse: newMouse(),
 		keyboard: newKeyboard(),
 		physics_engine: newPhysicsEngine(),
@@ -541,7 +540,6 @@ function newTileEngine(){
 				alert("please set map attributes before initializing tile engine");
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
 			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
-			TileEngine.createTiles();  //create tiles - uses tilesArray declared below
 			TileEngine.physics_engine.init(TileEngine)
 			TileEngine.initialized = true;
 		},
@@ -556,17 +554,21 @@ function newTileEngine(){
 			TileEngine.zoneTilesHigh = obj.zoneTilesHigh;
 			TileEngine.tilesWide = obj.tilesWide;
 			TileEngine.tilesHigh = obj.tilesHigh;
-			TileEngine.tilesArray = obj.tilesArray;
 			TileEngine.renderCircular |= obj.renderCircular;
 			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
 			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
 			TileEngine.view = newView(TileEngine);
 			TileEngine.view.init(obj.init_x,obj.init_y);
+			
+			Message.addMessage(obj.sourceTileCounts + ' Source Tiles to Load');
+			Message.addMessage(obj.tilesArray.length + ' Map Tiles to Load');
+			
 			var source = newSourceImage();  
 			source.init(obj.sourceFile);
 			source.image.onload = function(){  //event handler for image load 
 				TileEngine.tileSource = TileEngine.createTileSource(obj.tileWidth, obj.tileHeight, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
+			TileEngine.createTiles(obj.tilesArray, obj.physicsArray);
 		},
 		setMainSpriteAttributes: function(obj){ 
 			TileEngine.main_sprite = newSprite();
@@ -729,7 +731,7 @@ function newTileEngine(){
 			}
 			
 		},
-		createTiles: function() { //load tile array
+		createTiles: function(tilesArray, physicsArray) { //load tile array
 			TileEngine.createZones();  //create zones
 			var tile_index = 0;  //track current position in tile array
 			var y_zone = 0; //used to determine which zone to add tile to
@@ -743,7 +745,7 @@ function newTileEngine(){
 					
 					x_zone = Math.floor(i/TileEngine.zoneTilesWide);// calculate which horizontal zone we are in
 					var new_tile = newTile(); //create new tile object
-					new_tile.init(0, 0, TileEngine.tileWidth, TileEngine.tileHeight, TileEngine.tilesArray[tile_index]); //init tile
+					new_tile.init(0, 0, TileEngine.tileWidth, TileEngine.tileHeight, tilesArray[tile_index], physicsArray[tile_index]); //init tile
 					zone_index = (y_zone * zone_wide) + x_zone;//find what zone to add to using vert and horizontal positions
 					TileEngine.zones[zone_index].addTile(new_tile); //add tile to zone
 					tile_index++;
