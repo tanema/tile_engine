@@ -1,7 +1,7 @@
 /*
 	Lightweight Tile Engine For HTML5 Game Creation
     Copyright (C) 2010  John Graham
-	  Copyright (C) 2011  Tim Anema
+	Copyright (C) 2011  Tim Anema
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -171,12 +171,12 @@ function newKeyboard(){
 								 .mousedown(function(event){keyboard.mousedown(event)})
 								 .mouseup(function(event){keyboard.mouseup(event)})
 		},
-		keydown: function (){
+		keydown: function (event){
 			keyboard.orientation[event.keyCode] = true;
 			keyboard.tile_engine.active_controller = keyboard;
 			keyboard.key_down = true;
 		},
-		keyup: function (){
+		keyup: function (event){
 			keyboard.orientation[event.keyCode] = false;
 			keyboard.key_down = false;
 		},
@@ -248,7 +248,7 @@ function newKeyboard(){
 				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
 				
 				keyboard.tile_engine.view.x += (keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.02
-				keyboard.tile_engine.view.y += (keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.01
+				keyboard.tile_engine.view.y += (keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.02
 			}
 		}
 	}
