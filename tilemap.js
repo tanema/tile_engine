@@ -17,6 +17,24 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+var Console = { //object to create messages (using alert in a game loop will crash your browser)
+	console: 0, //hold element where messages will be added
+	hidden: true,
+	init: function(){
+		Console.console = $("<div id='console'>Loading...</br></div>")
+			.css('width', $('canvas').css('width'))
+			.insertAfter('canvas')
+	},
+	hide: function(){$(Console.console).hide('slow'); Console.hidden=true;},
+	show: function(){$(Console.console).show('slow'); Console.hidden=false;},
+	addMessage: function(msg){ //add new message
+		if(Console.console){
+			$(Console.console).append('> '+msg+'<br />');
+		}
+	}
+};
+Console.init();
+
 function newPhysicsEngine(){
 	var p_e = {
 		tiles: 0, tile_width: 0, tile_height: 0,
@@ -151,7 +169,7 @@ function newMouse(){
 
 function newKeyboard(){
 	var keyboard = {
-		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,
+		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,console: 192,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
 		thrust: .3,	decay: .97,	maxSpeed: 1, speedX: 0,speedY: 0,
 		view: 0, tile_engine:0, offset_x: 0, offset_y: 0, x:0, y:0,
@@ -192,6 +210,10 @@ function newKeyboard(){
 		},
 		update: function (){
 			if(keyboard._focus){
+				if(keyboard.orientation[keyboard.console]){
+					Console.hidden ? Console.show() : Console.hide();
+					keyboard.orientation[keyboard.console] = false
+				}
 				if (keyboard.orientation[keyboard.LEFT]){
 					keyboard.speedX -= keyboard.thrust;
 					keyboard.actor.left();
@@ -542,6 +564,7 @@ function newTileEngine(){
 			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
 			TileEngine.physics_engine.init(TileEngine)
 			TileEngine.initialized = true;
+			Console.addMessage("Tile Map Initialized");
 		},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
@@ -560,8 +583,8 @@ function newTileEngine(){
 			TileEngine.view = newView(TileEngine);
 			TileEngine.view.init(obj.init_x,obj.init_y);
 			
-			Message.addMessage(obj.sourceTileCounts + ' Source Tiles to Load');
-			Message.addMessage(obj.tilesArray.length + ' Map Tiles to Load');
+			Console.addMessage(obj.sourceTileCounts + ' Source Tiles to Load');
+			Console.addMessage(obj.tilesArray.length + ' Map Tiles to Load');
 			
 			var source = newSourceImage();  
 			source.init(obj.sourceFile);
@@ -756,6 +779,7 @@ function newTileEngine(){
 			for(var j = 0, jj = TileEngine.zones.length; j < jj; j++){
 				TileEngine.zones[j].arrangeTiles(TileEngine.tiles); //go throughh and arange x and y positions of tiles in zones
 			}
+			Console.addMessage("Tiles Ready");
 		}
 	}
 	

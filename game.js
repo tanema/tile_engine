@@ -156,6 +156,24 @@ var canvas_support = {
 	}
 } 
 
+var FPS = {
+	fps: 0, //hold element to display fps
+	fps_count: 0, //hold frame count
+	fps_timer: 0, //timer for FPS update (2 sec)
+	init: function(element){
+		FPS.fps = element;
+		FPS.fps_timer = setInterval(FPS.updateFPS, 2000);
+	},
+	updateFPS: function(){ //add new message
+		if(FPS.fps){
+			FPS.fps.innerHTML = (FPS.fps_count / 2) + 'fps';
+		}
+		FPS.fps_count = 0;
+	}
+};
+
+FPS.init(document.getElementById('fps'));
+
 var Game = {
 	gameTimer: 0, //holds id of main game timer
 	tileEngine: 0, //holds tile engine object
@@ -163,9 +181,8 @@ var Game = {
 	initGame: function() { //initialize game
 		Game.fps = 250; //set target fps to 250
 		Game.initGameData();
-		Message.addMessage("Tiles Ready");
 		Game.startTimer(); //start game loop
-		Message.addMessage("Main Loop Started");
+		Console.addMessage("Main Loop Started");
 	},
 	startTimer: function(){ //start game loop
 		var interval = 1000 / Game.fps;
@@ -234,6 +251,6 @@ if(canvas_support.check_canvas()){  //check canvas support before intializing
 	Game.initGame(); //initialize game object
 }
 else {
-	Message.addMessage('Your Browser Does not support this app!');	
+	Console.addMessage('Your Browser Does not support this app!');	
 }
 
