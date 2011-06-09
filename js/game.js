@@ -156,32 +156,21 @@ var canvas_support = {
 	}
 } 
 
-var FPS = {
-	fps: 0, //hold element to display fps
-	fps_count: 0, //hold frame count
-	fps_timer: 0, //timer for FPS update (2 sec)
-	init: function(element){
-		FPS.fps = element;
-		FPS.fps_timer = setInterval(FPS.updateFPS, 2000);
-	},
-	updateFPS: function(){ //add new message
-		if(FPS.fps){
-			FPS.fps.innerHTML = (FPS.fps_count / 2) + 'fps';
-		}
-		FPS.fps_count = 0;
-	}
-};
-
-FPS.init(document.getElementById('fps'));
-
 var Game = {
 	gameTimer: 0, //holds id of main game timer
 	tileEngine: 0, //holds tile engine object
-	fps: 0, //target fps for game loop
+	fps: 0, //hold element to display fps
+	fps_count: 0, //hold frame count
+	fps_timer: 0, //timer for FPS update (2 sec)
+	t: 0.0,
+	frameTime: 0,
+	currentTime: (new Date().getTime()),
 	initGame: function() { //initialize game
 		Game.fps = 250; //set target fps to 250
 		Game.initGameData();
 		Game.startTimer(); //start game loop
+		Game.fps = document.getElementById('fps');
+		Game.fps_timer = setInterval(Game.updateFPS, 2000);
 		Console.addMessage("Main Loop Started");
 	},
 	startTimer: function(){ //start game loop
@@ -189,8 +178,19 @@ var Game = {
 		Game.gameTimer = setInterval(Game.runLoop, interval);
 	},
 	runLoop: function(){ //code to run on each game loop
+		var newTime = (new Date().getTime());
+		Game.frameTime = newTime - Game.currentTime;
+		Game.currentTime = newTime;
+		Game.tileEngine.integrator(Game.t, Game.frameTime);
+		Game.t += Game.frameTime;
 		Game.tileEngine.drawFrame();
-		FPS.fps_count++;  //increments frame for fps display
+		Game.fps_count++;  //increments frame for fps display
+	},
+	updateFPS: function(){ //add new message
+		if(Game.fps){
+			$(Game.fps).html((Game.fps_count / 2) + 'fps ' + Game.frameTime + ' dt');
+		}
+		Game.fps_count = 0;
 	},
 	initGameData: function(){ //create and initialize tile engine
 		Game.tileEngine = newTileEngine(); //create tile engine object
@@ -200,7 +200,7 @@ var Game = {
 			mapObj.renderCircular = false;
 			
 			/*
-			mapObj.sourceFile = 'tiles.png';
+			mapObj.sourceFile = 'images/tiles.png';
 			mapObj.tileWidth = 32;
 			mapObj.tileHeight = 32;
 			mapObj.sourceTileCounts = 254;
@@ -208,7 +208,7 @@ var Game = {
 			mapObj.tilesWide = 9;
 			mapObj.tilesHigh = 18;
 			*/
-			mapObj.sourceFile = 'grid_tiles.png';
+			mapObj.sourceFile = 'images/grid_tiles.png';
 			mapObj.tileWidth = 16;
 			mapObj.tileHeight = 16;
 			mapObj.tile_offset_x = 1;
@@ -232,7 +232,7 @@ var Game = {
 			spriteObj.init_y = 32;
 			spriteObj.width = 32; 
 			spriteObj.height = 32;
-			spriteObj.sourceFile = 'tiles.png';
+			spriteObj.sourceFile = 'images/tiles.png';
 			spriteObj.sourceTileCounts = 254;
 			spriteObj.sourceTileAccross = 22;
 			spriteObj.movement_hash = {

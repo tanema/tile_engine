@@ -92,8 +92,8 @@ function newPhysicsEngine(){
 						return;
 				}while((this_x += p_e.tile_width) < to_x)
 			}
-			evnt_obj.sprite.x += evnt_obj.dx;
-			evnt_obj.sprite.y -= evnt_obj.dy;
+			evnt_obj.sprite.x += evnt_obj.dx*evnt_obj.dt;
+			evnt_obj.sprite.y -= evnt_obj.dy*evnt_obj.dt;
 		},
 		add_actor: function(container){
 			$(container).bind('position_changes', p_e.position_handler)
@@ -141,24 +141,26 @@ function newMouse(){
 				Mouse.accely = 0;
 				Mouse.timer = 0;
 			},
-			update: function(){
-				Mouse.vel_x = (Mouse.vel_x + (this.accelx / 10)) * 0.96;
-				Mouse.vel_y = (Mouse.vel_y + (this.accely / 10)) * 0.96;
+			update: function(t,dt){
+				var thrust = 0.55
+				Mouse.vel_x = (Mouse.vel_x + (this.accelx / 10)) * thrust;
+				Mouse.vel_y = (Mouse.vel_y + (this.accely / 10)) * thrust;
 				
-				Mouse.view.x = Mouse.view.tileEngine.renderCircular ? (Mouse.view.x-Mouse.vel_x)%Mouse.view.tileEngine.mapWidth:(Mouse.view.x-Mouse.vel_x)
-				Mouse.view.y = Mouse.view.tileEngine.renderCircular ? (Mouse.view.y-Mouse.vel_y)%Mouse.view.tileEngine.mapHeight:(Mouse.view.y-Mouse.vel_y)
+				Mouse.view.x = Mouse.view.tileEngine.renderCircular ? (Mouse.view.x-(Mouse.vel_x*dt))%Mouse.view.tileEngine.mapWidth:(Mouse.view.x-(Mouse.vel_x*dt))
+				Mouse.view.y = Mouse.view.tileEngine.renderCircular ? (Mouse.view.y-(Mouse.vel_y*dt))%Mouse.view.tileEngine.mapHeight:(Mouse.view.y-(Mouse.vel_y*dt))
 				Mouse.view.viewWidth = Mouse.view.x + Mouse.view.tileEngine.width;
 				Mouse.view.viewHeight = Mouse.view.y + Mouse.view.tileEngine.height;
 				
+				var rebound = 0.08*dt;
 				if(!Mouse.tileEngine.renderCircular){
 					if(Mouse.view.x < 0 && !this.isDown())
-						Mouse.vel_x -= 0.1;
+						Mouse.vel_x -= rebound;
 					if(Mouse.view.y < 0 && !this.isDown()) 
-						Mouse.vel_y -= 0.1;
+						Mouse.vel_y -= rebound;
 					if(Mouse.view.viewWidth > Mouse.tileEngine.mapWidth && !this.isDown()) 
-						Mouse.vel_x += 0.1;
+						Mouse.vel_x += rebound;
 					if(Mouse.view.viewHeight > Mouse.tileEngine.mapHeight && !this.isDown()) 
-						Mouse.vel_y += 0.1;
+						Mouse.vel_y += rebound;
 				}
 				
 				this.reset();
@@ -171,7 +173,7 @@ function newKeyboard(){
 	var keyboard = {
 		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,console: 192,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
-		thrust: .3,	decay: .97,	maxSpeed: 1, speedX: 0,speedY: 0,
+		thrust: .3,	decay: 0.7,	maxSpeed: 0.55, speedX: 0,speedY: 0,
 		view: 0, tile_engine:0, offset_x: 0, offset_y: 0, x:0, y:0,
 		key_down: false,
 		width:0, height: 0,
@@ -208,7 +210,7 @@ function newKeyboard(){
 			keyboard.y = keyboard.actor.y;
 			keyboard.doc_click = keyboard.ctx_click = false;
 		},
-		update: function (){
+		update: function (t,dt){
 			if(keyboard._focus){
 				if(keyboard.orientation[keyboard.console]){
 					Console.hidden ? Console.show() : Console.hide();
@@ -241,7 +243,8 @@ function newKeyboard(){
 				$(keyboard.actor).trigger('position_changes', {
 					sprite: keyboard,
 					dx: keyboard.speedX,
-					dy: keyboard.speedY
+					dy: keyboard.speedY,
+					dt: dt
 				});
 				
 				if(keyboard.tile_engine.renderCircular){
@@ -269,8 +272,8 @@ function newKeyboard(){
 				keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
 				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
 				
-				keyboard.tile_engine.view.x += (keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.02
-				keyboard.tile_engine.view.y += (keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.02
+				keyboard.tile_engine.view.x += (keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.05
+				keyboard.tile_engine.view.y += (keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.05
 			}
 		}
 	}
@@ -285,7 +288,7 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 		init: function(x,y){
 			view.update()
 		},
-		update : function(){
+		update : function(t,dt){
 			view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
 			view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
 			view.viewWidth = view.x + view.tileEngine.width;
@@ -603,11 +606,13 @@ function newTileEngine(){
 				TileEngine.spriteSource = TileEngine.createTileSource(obj.width, obj.height, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
 		},
+		integrator: function(t,dt){
+			TileEngine.active_controller ? TileEngine.active_controller.update(t,dt):TileEngine.view.update(t,dt)
+		},
 		drawFrame: function(){ //main drawing function
 			if(!TileEngine.initialized)//still loading
 				return
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
-			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update()
 			if(TileEngine.zones){
 				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
 			}
