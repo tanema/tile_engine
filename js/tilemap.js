@@ -35,73 +35,6 @@ var Console = { //object to create messages (using alert in a game loop will cra
 };
 Console.init();
 
-function newPhysicsEngine(){
-	var p_e = {
-		tiles: 0, tile_width: 0, tile_height: 0,
-		init: function(TileEngine){
-			p_e.tiles = TileEngine.tiles
-			p_e.tile_width = TileEngine.tileWidth 
-			p_e.tile_height = TileEngine.tileHeight
-			p_e.map_width = TileEngine.mapWidth 
-			p_e.map_height = TileEngine.mapHeight
-		},
-		inside_map: function(i, span){
-			return (i + span) % span
-		},
-		to_unit: function(i, d, unit, span){
-			i = Math.floor((i+d) / unit)
-			return p_e.inside_map((i * unit),span)
-		},
-		position_handler: function(event, evnt_obj){
-			var tile_width = p_e.tile_width,tile_height = p_e.tile_height,
-					map_width = p_e.map_width,map_height = p_e.map_height,
-					x = p_e.to_unit(evnt_obj.sprite.x, evnt_obj.dx, tile_width, map_width),
-					y = p_e.to_unit(evnt_obj.sprite.y, evnt_obj.dy, tile_height, map_height);
-					
-			if((Math.round(evnt_obj.dx*2)/2)!= 0){
-				var this_y = y,
-						this_x = (evnt_obj.dx > 0) ? p_e.to_unit(x+evnt_obj.sprite.width, 0, tile_width, map_width) : x,
-						to_y = p_e.inside_map(evnt_obj.sprite.y+evnt_obj.sprite.height,map_height)
-				
-				if(this_y > to_y){
-					do{
-						if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0)
-							return;
-					}while((this_y += p_e.tile_height) < map_height)
-					to_y = 0;
-				}
-				do{
-					if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0)
-						return;
-				}while((this_y += p_e.tile_height) < to_y)
-			}
-			
-			if((Math.round(evnt_obj.dy*2)/2) != 0){
-				var this_x = x
-						this_y = (evnt_obj.dy < 0) ? p_e.to_unit(y+evnt_obj.sprite.height+1, 0, p_e.tile_height, map_height) : y,
-						to_x = p_e.inside_map(evnt_obj.sprite.x+evnt_obj.sprite.width,map_width)
-				if(this_x > to_x){
-					do{
-						if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0)
-							return;
-					}while((this_x += p_e.tile_width) < map_width)
-					this_x = 0;
-				}
-				do{
-					if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0)
-						return;
-				}while((this_x += p_e.tile_width) < to_x)
-			}
-			evnt_obj.sprite.x += evnt_obj.dx*evnt_obj.dt;
-			evnt_obj.sprite.y -= evnt_obj.dy*evnt_obj.dt;
-		},
-		add_actor: function(container){
-			$(container).bind('position_changes', p_e.position_handler)
-		}
-	}
-	return p_e;
-}
-
 function newMouse(){
 	var Mouse = {
 			down: false,offsetx: 0,offsety: 0,timer: 0,accelx: 0,accely: 0,
@@ -142,16 +75,16 @@ function newMouse(){
 				Mouse.timer = 0;
 			},
 			update: function(t,dt){
-				var thrust = 0.55
+				var thrust = 0.96
 				Mouse.vel_x = (Mouse.vel_x + (this.accelx / 10)) * thrust;
 				Mouse.vel_y = (Mouse.vel_y + (this.accely / 10)) * thrust;
 				
-				Mouse.view.x = Mouse.view.tileEngine.renderCircular ? (Mouse.view.x-(Mouse.vel_x*dt))%Mouse.view.tileEngine.mapWidth:(Mouse.view.x-(Mouse.vel_x*dt))
-				Mouse.view.y = Mouse.view.tileEngine.renderCircular ? (Mouse.view.y-(Mouse.vel_y*dt))%Mouse.view.tileEngine.mapHeight:(Mouse.view.y-(Mouse.vel_y*dt))
+				Mouse.view.x = Mouse.view.tileEngine.renderCircular ? (Mouse.view.x-(Mouse.vel_x))%Mouse.view.tileEngine.mapWidth:(Mouse.view.x-(Mouse.vel_x))
+				Mouse.view.y = Mouse.view.tileEngine.renderCircular ? (Mouse.view.y-(Mouse.vel_y))%Mouse.view.tileEngine.mapHeight:(Mouse.view.y-(Mouse.vel_y))
 				Mouse.view.viewWidth = Mouse.view.x + Mouse.view.tileEngine.width;
 				Mouse.view.viewHeight = Mouse.view.y + Mouse.view.tileEngine.height;
 				
-				var rebound = 0.08*dt;
+				var rebound = 0.1;
 				if(!Mouse.tileEngine.renderCircular){
 					if(Mouse.view.x < 0 && !this.isDown())
 						Mouse.vel_x -= rebound;
@@ -173,7 +106,7 @@ function newKeyboard(){
 	var keyboard = {
 		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,console: 192,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
-		thrust: .3,	decay: 0.7,	maxSpeed: 0.55, speedX: 0,speedY: 0,
+		thrust: .3,	decay: 0.97,	maxSpeed: 1, speedX: 0,speedY: 0,
 		view: 0, tile_engine:0, offset_x: 0, offset_y: 0, x:0, y:0,
 		key_down: false,
 		width:0, height: 0,
@@ -409,6 +342,19 @@ function newSprite(){
 			Sprite.current_index++;
 			if(Sprite.current_index >= Sprite.current_direction.length)
 				Sprite.current_index = 0
+		},
+		draw: function(te, views){
+			if(views){
+				var v = views.length;
+				while(v--){
+					var currentView = views[v];
+					if(te.spriteSource && currentView.isInView(Sprite)){
+						te.ctx.drawImage(te.spriteSource[Sprite.current_frame()].canvas, (Sprite.x+currentView.xoffset)-te.view.x, (Sprite.y+currentView.yoffset)-te.view.y);
+					}
+				}
+			}else if(te.spriteSource && te.view.isInView(Sprite))
+				te.ctx.drawImage(te.spriteSource[Sprite.current_frame()].canvas, Sprite.x-te.view.x, Sprite.y-te.view.y);
+			
 		}
 	};
 	return Sprite;  //returns newly created sprite object
@@ -549,7 +495,7 @@ function newTileEngine(){
 		tileHeight: 0, //height in pixels of single tile
 		mapWidth: 0,
 		mapHeight: 0,
-		sprites: 0,
+		sprites: new Array(),
 		main_sprite: 0,
 		spriteSource: 0,
 		mouse: newMouse(),
@@ -605,6 +551,7 @@ function newTileEngine(){
 			source.image.onload = function(){  //event handler for image load 
 				TileEngine.spriteSource = TileEngine.createTileSource(obj.width, obj.height, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
+			TileEngine.sprites.push(TileEngine.main_sprite)
 		},
 		integrator: function(t,dt){
 			TileEngine.active_controller ? TileEngine.active_controller.update(t,dt):TileEngine.view.update(t,dt)
@@ -635,20 +582,18 @@ function newTileEngine(){
 					}
 				}
 			}
-			//main_sprite
-			var v = views.length;
-			while(v--){
-				var currentView = views[v];
-				if(TileEngine.spriteSource && currentView.isInView(TileEngine.main_sprite)){
-					TileEngine.ctx.drawImage(TileEngine.spriteSource[TileEngine.main_sprite.current_frame()].canvas, (TileEngine.main_sprite.x+currentView.xoffset)-view.x, (TileEngine.main_sprite.y+currentView.yoffset)-view.y);
-				}
+			
+			//sprites
+			i = TileEngine.sprites.length
+			while(i--){
+				TileEngine.sprites[i].draw(TileEngine, views)
 			}
 			
 			//decorations
 			i = validZones.length;
 			while(i--){
 				var check_zone = validZones[i],
-						currentView = check_zone.viewoffset;
+					currentView = check_zone.viewoffset;
 				check_zone.drawDecorations(currentView);
 				TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
 			}
@@ -666,9 +611,11 @@ function newTileEngine(){
 				} 
 			}
 			
-			//main_sprite
-			if(TileEngine.spriteSource && view.isInView(TileEngine.main_sprite))
-				TileEngine.ctx.drawImage(TileEngine.spriteSource[TileEngine.main_sprite.current_frame()].canvas, TileEngine.main_sprite.x-view.x, TileEngine.main_sprite.y-view.y);
+			//sprites
+			i = TileEngine.sprites.length
+			while(i--){
+				TileEngine.sprites[i].draw(TileEngine)
+			}
 			
 			//decorations
 			i = validZones.length;

@@ -2,7 +2,7 @@
 
 //this array tells the tile engine which offset in the tiles.png image to use
 
-var maptilesArray = [ 
+var maptilesArray1 = [ 
 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,
 64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,125,126,127,
 128,129,130,131,132,133,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,156,157,158,159,160,161,162,163,164,165,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,188,189,190,191,
@@ -68,8 +68,8 @@ var maptilesArray = [
 3968,3969,3970,3971,3972,3973,3974,3975,3976,3977,3978,3979,3980,3981,3982,3983,3984,3985,3986,3987,3988,3989,3990,3991,3992,3993,3994,3995,3996,3997,3998,3999,4000,4001,4002,4003,4004,4005,4006,4007,4008,4009,4010,4011,4012,4013,4014,4015,4016,4017,4018,4019,4020,4021,4022,4023,4024,4025,4026,4027,4028,4029,4030,4031,
 4032,4033,4034,4035,4036,4037,4038,4039,4040,4041,4042,4043,4044,4045,4046,4047,4048,4049,4050,4051,4052,4053,4054,4055,4056,4057,4058,4059,4060,4061,4062,4063,4064,4065,4066,4067,4068,4069,4070,4071,4072,4073,4074,4075,4076,4077,4078,4079,4080,4081,4082,4083,4084,4085,4086,4087,4088,4089,4090,4091,4092,4093,4094,4095
 						];
-/*
-var maptilesArray = [ 
+
+var maptilesArray2 = [ 
 							71,71,70,71,71,71,71,71,71,
 							135,135,92,135,135,135,135,135,135,
 							72,72,90,72,72,72,72,72,72,
@@ -88,7 +88,7 @@ var maptilesArray = [
 							71,27,70,71,71,49,50,71,71,
 							71,22,70,71,71,66,66,73,71,
 							71,71,70,71,71,71,71,71,71
-						];*/
+						];
 var decorationtilesArray = [ 
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
@@ -141,7 +141,8 @@ var makeMapTilesArray = function(tiles_a, decor_a){
 	}
 	return tilesArray;
 }
-var tilesArray = makeMapTilesArray(maptilesArray, decorationtilesArray)
+var tilesArray1 = makeMapTilesArray(maptilesArray1, decorationtilesArray)
+var tilesArray2 = makeMapTilesArray(maptilesArray2, decorationtilesArray)
 
 //function to detect canvas support by alterebro (http://code.google.com/p/browser-canvas-support/)
 var canvas_support = {
@@ -163,8 +164,9 @@ var Game = {
 	fps_count: 0, //hold frame count
 	fps_timer: 0, //timer for FPS update (2 sec)
 	t: 0.0,
-	frameTime: 0,
-	currentTime: (new Date().getTime()),
+	dt: 0.01,
+	currentTime: (new Date).getTime(),
+	accumulator: 0.0,
 	initGame: function() { //initialize game
 		Game.fps = 250; //set target fps to 250
 		Game.initGameData();
@@ -178,17 +180,24 @@ var Game = {
 		Game.gameTimer = setInterval(Game.runLoop, interval);
 	},
 	runLoop: function(){ //code to run on each game loop
-		var newTime = (new Date().getTime());
-		Game.frameTime = newTime - Game.currentTime;
+		var newTime = (new Date).getTime(),
+			deltaTime = (newTime - Game.currentTime)/100
+		if(deltaTime > 0.25)
+			deltaTime = 0.25
 		Game.currentTime = newTime;
-		Game.tileEngine.integrator(Game.t, Game.frameTime);
-		Game.t += Game.frameTime;
+		Game.accumulator += deltaTime;
+		while(Game.accumulator >= Game.dt) {
+			Game.accumulator -= Game.dt;
+			Game.tileEngine.integrator(Game.t, Game.dt);
+			Game.t += Game.dt;
+		}
+		
 		Game.tileEngine.drawFrame();
 		Game.fps_count++;  //increments frame for fps display
 	},
 	updateFPS: function(){ //add new message
 		if(Game.fps){
-			$(Game.fps).html((Game.fps_count / 2) + 'fps ' + Game.frameTime + ' dt');
+			$(Game.fps).html((Game.fps_count / 2) + 'fps');
 		}
 		Game.fps_count = 0;
 	},
@@ -197,17 +206,10 @@ var Game = {
 		var mapObj = new Object(); //create tile engine initializer mapObject
 			mapObj.canvas = document.getElementById('main_canvas');
 			mapObj.ctx = mapObj.canvas.getContext('2d');
-			mapObj.renderCircular = false;
+			mapObj.renderCircular = true;
+			mapObj.init_x = 0;
+			mapObj.init_y = 0;
 			
-			/*
-			mapObj.sourceFile = 'images/tiles.png';
-			mapObj.tileWidth = 32;
-			mapObj.tileHeight = 32;
-			mapObj.sourceTileCounts = 254;
-			mapObj.sourceTileAccross = 22;
-			mapObj.tilesWide = 9;
-			mapObj.tilesHigh = 18;
-			*/
 			mapObj.sourceFile = 'images/grid_tiles.png';
 			mapObj.tileWidth = 16;
 			mapObj.tileHeight = 16;
@@ -217,14 +219,24 @@ var Game = {
 			mapObj.sourceTileAccross = 64;
 			mapObj.tilesWide = 64;
 			mapObj.tilesHigh = 64;
-			
+			mapObj.tilesArray = tilesArray1;
+			mapObj.physicsArray = tilesPhysicsArray;
+			mapObj.zoneTilesWide = 9;
+			mapObj.zoneTilesHigh = 9;
+			/*
+			mapObj.sourceFile = 'images/tiles.png';
+			mapObj.tileWidth = 32;
+			mapObj.tileHeight = 32;
+			mapObj.sourceTileCounts = 254;
+			mapObj.sourceTileAccross = 22;
+			mapObj.tilesWide = 9;
+			mapObj.tilesHigh = 18;
+			mapObj.tilesArray = tilesArray2;
+			mapObj.physicsArray = tilesPhysicsArray;
 			mapObj.zoneTilesWide = 3;
 			mapObj.zoneTilesHigh = 3;
-			mapObj.init_x = 0;
-			mapObj.init_y = 0;
+			*/
 			
-			mapObj.tilesArray = tilesArray;
-			mapObj.physicsArray = tilesPhysicsArray;
 		Game.tileEngine.setMapAttributes(mapObj);
 		
 		var spriteObj = new Object();
