@@ -74,7 +74,7 @@ function newMouse(){
 				Mouse.accely = 0;
 				Mouse.timer = 0;
 			},
-			update: function(t,dt){
+			update: function(){
 				var thrust = 0.96
 				Mouse.vel_x = (Mouse.vel_x + (this.accelx / 10)) * thrust;
 				Mouse.vel_y = (Mouse.vel_y + (this.accely / 10)) * thrust;
@@ -106,16 +106,13 @@ function newKeyboard(){
 	var keyboard = {
 		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,console: 192,
 		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
-		thrust: .3,	decay: 0.97,	maxSpeed: 1, speedX: 0,speedY: 0,
-		view: 0, tile_engine:0, offset_x: 0, offset_y: 0, x:0, y:0,
-		key_down: false,
-		width:0, height: 0,
+		thrust: 10,	maxSpeed: 100, view: 0, tile_engine:0, 
+		offset_x: 0, offset_y: 0, key_down: false,	
 		init: function(TileEngine, to_move) {
 			keyboard.ctx = TileEngine.canvas;
 			keyboard.tile_engine = TileEngine;
 			keyboard.actor = to_move;
-			keyboard.width = to_move.width;
-			keyboard.height = to_move.height;
+			TileEngine.physics_engine.add_actor(keyboard, 0, 0, to_move.width, to_move.height);
 			keyboard.offset_x = TileEngine.width * 0.5;
 			keyboard.offset_y = TileEngine.height * 0.5;
 			$(keyboard.ctx).mouseup(function(event){keyboard.ctx_click = true;})
@@ -139,46 +136,38 @@ function newKeyboard(){
 		mouseup: function (){
 			keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
 			$('canvas').css("border", (keyboard._focus ? "2px solid lightblue":""))
-			keyboard.x = keyboard.actor.x;
-			keyboard.y = keyboard.actor.y;
+			if(keyboard._focus)
+				keyboard.setXY(keyboard.actor.x,keyboard.actor.y);
 			keyboard.doc_click = keyboard.ctx_click = false;
 		},
-		update: function (t,dt){
+		update: function (){
 			if(keyboard._focus){
 				if(keyboard.orientation[keyboard.console]){
 					Console.hidden ? Console.show() : Console.hide();
 					keyboard.orientation[keyboard.console] = false
 				}
 				if (keyboard.orientation[keyboard.LEFT]){
-					keyboard.speedX -= keyboard.thrust;
+					keyboard.dx -= keyboard.thrust;
 					keyboard.actor.left();
 				}
 				if (keyboard.orientation[keyboard.RIGHT]){
-					keyboard.speedX += keyboard.thrust;
+					keyboard.dx += keyboard.thrust;
 					keyboard.actor.right();
 				}
 				if (keyboard.orientation[keyboard.UP]){
-					keyboard.speedY += keyboard.thrust;
+					keyboard.dy += keyboard.thrust;
 					keyboard.actor.up();
 				}
 				if (keyboard.orientation[keyboard.DOWN]){
-					keyboard.speedY -= keyboard.thrust;
+					keyboard.dy -= keyboard.thrust;
 					keyboard.actor.down();
 				}
-				keyboard.speedX *= keyboard.decay;
-				keyboard.speedY *= keyboard.decay;
-				var currentSpeed = Math.sqrt((keyboard.speedX * keyboard.speedX) + (keyboard.speedY * keyboard.speedY));
+				//speed limit
+				var currentSpeed = Math.sqrt((keyboard.dx * keyboard.dx) + (keyboard.dy * keyboard.dy));
 				if (currentSpeed > keyboard.maxSpeed){
-					keyboard.speedX *= keyboard.maxSpeed/currentSpeed;
-					keyboard.speedY *= keyboard.maxSpeed/currentSpeed;
+					keyboard.dx *= keyboard.maxSpeed/currentSpeed;
+					keyboard.dy *= keyboard.maxSpeed/currentSpeed;
 				}
-				
-				$(keyboard.actor).trigger('position_changes', {
-					sprite: keyboard,
-					dx: keyboard.speedX,
-					dy: keyboard.speedY,
-					dt: dt
-				});
 				
 				if(keyboard.tile_engine.renderCircular){
 					if(keyboard.tile_engine.view.x >= keyboard.tile_engine.mapWidth){
@@ -202,11 +191,10 @@ function newKeyboard(){
 				keyboard.actor.x = (keyboard.tile_engine.renderCircular) ? (keyboard.x+keyboard.tile_engine.mapWidth)%keyboard.tile_engine.mapWidth : keyboard.x
 				keyboard.actor.y = (keyboard.tile_engine.renderCircular) ? (keyboard.y+keyboard.tile_engine.mapHeight)%keyboard.tile_engine.mapHeight : keyboard.y
 				
-				keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
-				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
-				
 				keyboard.tile_engine.view.x += (keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.05
 				keyboard.tile_engine.view.y += (keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.05
+				keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
+				keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
 			}
 		}
 	}
@@ -221,7 +209,7 @@ function newView(TileEngine, init_x, init_y, vw, vh){
 		init: function(x,y){
 			view.update()
 		},
-		update : function(t,dt){
+		update : function(){
 			view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x
 			view.y = view.tileEngine.renderCircular ? view.y%view.tileEngine.mapHeight:view.y
 			view.viewWidth = view.x + view.tileEngine.width;
@@ -302,12 +290,9 @@ function newTileSource(){ //image used to create tile
 
 function newSprite(){
 	var Sprite = {
-		x: 0,y: 0,width: 0,height: 0,sourceHash: 0, tileEngine: 0,current_index:0, current_direction: 0,
+		sourceHash: 0, tileEngine: 0,current_index:0, current_direction: 0,
 		init: function(x, y, width, height, sourceHash, te){ //initialize sprite
-			Sprite.x = x;
-			Sprite.y = y;
-			Sprite.width = width;
-			Sprite.height = height;
+			te.physics_engine.add_actor(Sprite, x, y, width, height);
 			Sprite.sourceHash = sourceHash;
 			Sprite.tileEngine = te;
 			Sprite.current_direction = Sprite.sourceHash.up
@@ -545,7 +530,6 @@ function newTileEngine(){
 		setMainSpriteAttributes: function(obj){ 
 			TileEngine.main_sprite = newSprite();
 			TileEngine.main_sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, TileEngine)
-			TileEngine.physics_engine.add_actor(TileEngine.main_sprite);
 			var source = newSourceImage();  
 			source.init(obj.sourceFile);
 			source.image.onload = function(){  //event handler for image load 
@@ -554,7 +538,8 @@ function newTileEngine(){
 			TileEngine.sprites.push(TileEngine.main_sprite)
 		},
 		integrator: function(t,dt){
-			TileEngine.active_controller ? TileEngine.active_controller.update(t,dt):TileEngine.view.update(t,dt)
+			TileEngine.physics_engine.integrate(dt)
+			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update()
 		},
 		drawFrame: function(){ //main drawing function
 			if(!TileEngine.initialized)//still loading

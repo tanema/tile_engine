@@ -202,40 +202,44 @@ var Game = {
 		Game.fps_count = 0;
 	},
 	initGameData: function(){ //create and initialize tile engine
+		//change map type for testing
+		var large_map = false;
+		
 		Game.tileEngine = newTileEngine(); //create tile engine object
 		var mapObj = new Object(); //create tile engine initializer mapObject
 			mapObj.canvas = document.getElementById('main_canvas');
 			mapObj.ctx = mapObj.canvas.getContext('2d');
-			mapObj.renderCircular = true;
+			mapObj.renderCircular = false;
 			mapObj.init_x = 0;
 			mapObj.init_y = 0;
 			
-			mapObj.sourceFile = 'images/grid_tiles.png';
-			mapObj.tileWidth = 16;
-			mapObj.tileHeight = 16;
-			mapObj.tile_offset_x = 1;
-			mapObj.tile_offset_y = 1;
-			mapObj.sourceTileCounts = 4096;
-			mapObj.sourceTileAccross = 64;
-			mapObj.tilesWide = 64;
-			mapObj.tilesHigh = 64;
-			mapObj.tilesArray = tilesArray1;
-			mapObj.physicsArray = tilesPhysicsArray;
-			mapObj.zoneTilesWide = 9;
-			mapObj.zoneTilesHigh = 9;
-			/*
-			mapObj.sourceFile = 'images/tiles.png';
-			mapObj.tileWidth = 32;
-			mapObj.tileHeight = 32;
-			mapObj.sourceTileCounts = 254;
-			mapObj.sourceTileAccross = 22;
-			mapObj.tilesWide = 9;
-			mapObj.tilesHigh = 18;
-			mapObj.tilesArray = tilesArray2;
-			mapObj.physicsArray = tilesPhysicsArray;
-			mapObj.zoneTilesWide = 3;
-			mapObj.zoneTilesHigh = 3;
-			*/
+			if(large_map){
+				mapObj.sourceFile = 'images/grid_tiles.png';
+				mapObj.tileWidth = 16;
+				mapObj.tileHeight = 16;
+				mapObj.tile_offset_x = 1;
+				mapObj.tile_offset_y = 1;
+				mapObj.sourceTileCounts = 4096;
+				mapObj.sourceTileAccross = 64;
+				mapObj.tilesWide = 64;
+				mapObj.tilesHigh = 64;
+				mapObj.tilesArray = tilesArray1;
+				mapObj.physicsArray = tilesPhysicsArray;
+				mapObj.zoneTilesWide = 9;
+				mapObj.zoneTilesHigh = 9;
+			}else{
+				mapObj.sourceFile = 'images/tiles.png';
+				mapObj.tileWidth = 32;
+				mapObj.tileHeight = 32;
+				mapObj.sourceTileCounts = 254;
+				mapObj.sourceTileAccross = 22;
+				mapObj.tilesWide = 9;
+				mapObj.tilesHigh = 18;
+				mapObj.tilesArray = tilesArray2;
+				mapObj.physicsArray = tilesPhysicsArray;
+				mapObj.zoneTilesWide = 3;
+				mapObj.zoneTilesHigh = 3;
+			}
 			
 		Game.tileEngine.setMapAttributes(mapObj);
 		
