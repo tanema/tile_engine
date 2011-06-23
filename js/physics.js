@@ -12,9 +12,8 @@ function newPhysicsEngine(){
 		inside_map: function(i, span){
 			return (i + span) % span
 		},
-		to_unit: function(i, d, unit, span){
-			i = Math.floor((i+d) / unit)
-			return p_e.inside_map((i * unit),span)
+		to_unit: function(i, unit, span){
+			return p_e.inside_map((Math.floor(i/ unit) * unit),span)
 		},
 		Body: function(x, y, width, height){
 			var body = {
@@ -40,50 +39,54 @@ function newPhysicsEngine(){
 						this.x += diffx * this.decay;
 						this.y += diffy * this.decay;
 					},
-					map_collide: function(){
+					map_collide: function(delta){
 						var tile_width = p_e.tile_width,tile_height = p_e.tile_height,
 								map_width = p_e.map_width,map_height = p_e.map_height,
-								x = p_e.to_unit(body.x, body.dx, tile_width, map_width),
-								y = p_e.to_unit(body.y, body.dy, tile_height, map_height);
+								x = p_e.to_unit(this.x, tile_width, map_width),
+								y = p_e.to_unit(this.y, tile_height, map_height);
 								
-						if((Math.round(body.dx*2)/2)!= 0){
+						if((Math.round(this.dx*2)/2)!= 0){
 							var this_y = y,
-									this_x = (body.dx > 0) ? p_e.to_unit(x+body.width, 0, tile_width, map_width) : x,
-									to_y = p_e.inside_map(body.y+body.height,map_height)
+									this_x = (this.dx > 0) ? p_e.to_unit(x+this.width, tile_width, map_width) : x,
+									to_y = p_e.inside_map(this.y+this.height,map_height)
 							
 							if(this_y > to_y){
 								do{
+									p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].darker = 0.4;
 									if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0){
-										body.dx = 0;
+										this.x -= this.dx * delta * delta;
 										return;
 									}
 								}while((this_y += p_e.tile_height) < map_height)
 								to_y = 0;
 							}
 							do{
+								p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].darker = 0.4;
 								if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0){
-									body.dy = 0
+									this.x -= this.dx * delta * delta;
 									return;
 								}
 							}while((this_y += p_e.tile_height) < to_y)
 						}
 						
-						if((Math.round(body.dy*2)/2) != 0){
+						if((Math.round(this.dy*2)/2) != 0){
 							var this_x = x
-									this_y = (body.dy < 0) ? p_e.to_unit(y+body.height+1, 0, p_e.tile_height, map_height) : y,
-									to_x = p_e.inside_map(body.x+body.width,map_width)
+									this_y = (this.dy < 0) ? p_e.to_unit(y+this.height+1, p_e.tile_height, map_height) : y,
+									to_x = p_e.inside_map(this.x+this.width,map_width)
 							if(this_x > to_x){
 								do{
+									p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].darker = 0.4;
 									if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0){
-										body.dy = 0
+										this.y += this.dy * delta * delta;
 										return;
 									}
 								}while((this_x += p_e.tile_width) < map_width)
 								this_x = 0;
 							}
 							do{
+								p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].darker = 0.4;
 								if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0){
-									body.dy = 0
+									this.y += this.dy * delta * delta;
 									return;
 								}
 							}while((this_x += p_e.tile_width) < to_x)
@@ -113,10 +116,10 @@ function newPhysicsEngine(){
 				}
 			}
 		},
-		barrier_collide: function(event, body){
+		barrier_collide: function(delta){
 			var i = p_e.bodies_length
 			while(i--){
-				p_e.bodies[i].map_collide();
+				p_e.bodies[i].map_collide(delta);
 			}
 		},
 		border_collide: function(){
@@ -166,7 +169,7 @@ function newPhysicsEngine(){
 			p_e.accelerate(delta);
 			$("#pos").html(p_e.bodies[1].x.toFixed(2) +":"+p_e.bodies[1].y.toFixed(2)+":"+p_e.bodies[1].dx.toFixed(2) +":"+p_e.bodies[1].dy.toFixed(2))
 			//p_e.collide();
-			//p_e.barrier_collide();
+			p_e.barrier_collide(delta);
 			//p_e.border_collide();
 			p_e.inertia(delta);
 		},
