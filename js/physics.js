@@ -2,6 +2,7 @@ function newPhysicsEngine(){
 	var p_e = {
 		tiles: 0, tile_width: 0, tile_height: 0,
 		bodies: new Array(), render_circ: false,
+		ingnore_collide: false,
 		init: function(TileEngine){
 			p_e.tiles = TileEngine.tiles
 			p_e.tile_width = TileEngine.tileWidth 
@@ -99,9 +100,13 @@ function newPhysicsEngine(){
 		collide: function(){
 			for(var i=0, l=p_e.bodies_length; i<l; i++){
 				var body1 = p_e.bodies[i];
+				if(body1.ingnore_collide)
+						continue;
 				for(var j=i+1; j<l; j++){
-					var body2 = p_e.bodies[j],
-							x = body1.x - body2.x,
+					var body2 = p_e.bodies[j]
+					if(body2.ingnore_collide)
+						continue;
+					var  x = body1.x - body2.x,
 							y = body1.y - body2.y,
 							slength = x*x+y*y,
 							length = Math.sqrt(slength),
@@ -168,17 +173,19 @@ function newPhysicsEngine(){
 		integrate: function(delta){
 			p_e.gravity();
 			p_e.accelerate(delta);
-			//p_e.collide();
+			if(!p_e.ingnore_collide)
+				p_e.collide();
 			p_e.barrier_collide(delta);
 			if(!p_e.render_circ)
 				p_e.border_collide();
 			p_e.inertia(delta);
 		},
-		add_actor: function(actor, x, y, width, height){
+		add_actor: function(actor, x, y, width, height, ingnore_collide){
 			var body = new p_e.Body(x, y, width, height)
 			$.extend(actor, body)
 			p_e.bodies.push(actor)
 			p_e.bodies_length = p_e.bodies.length
+			p_e.ingnore_collide = ingnore_collide || p_e.ingnore_collide
 		}
 	}
 	return p_e;

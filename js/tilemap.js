@@ -117,6 +117,7 @@ function newKeyboard(){
 			TileEngine.physics_engine.add_actor(keyboard, to_move.x, to_move.y, to_move.width, to_move.height);
 			keyboard.offset_x = TileEngine.width * 0.5;
 			keyboard.offset_y = TileEngine.height * 0.5;
+			keyboard.ingnore_collide = true; //this stops the physics engine from thinking the keyboard is colliding with the actor
 			$(keyboard.ctx).mouseup(function(event){keyboard.ctx_click = true;})
 			$(document).keydown(function(event){keyboard.keydown(event)})
 								 .keyup(function(event){keyboard.keyup(event)})
