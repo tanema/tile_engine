@@ -163,35 +163,19 @@ var Game = {
 	fps: 0, //hold element to display fps
 	fps_count: 0, //hold frame count
 	fps_timer: 0, //timer for FPS update (2 sec)
-	t: 0.0,
-	dt: 0.01,
-	currentTime: (new Date).getTime(),
-	accumulator: 0.0,
 	initGame: function() { //initialize game
 		Game.fps = 250; //set target fps to 250
 		Game.initGameData();
 		Game.startTimer(); //start game loop
 		Game.fps = document.getElementById('fps');
 		Game.fps_timer = setInterval(Game.updateFPS, 2000);
-		Console.addMessage("Main Loop Started");
+		Console.log("Main Loop Started");
 	},
 	startTimer: function(){ //start game loop
 		var interval = 1000 / Game.fps;
 		Game.gameTimer = setInterval(Game.runLoop, interval);
 	},
 	runLoop: function(){ //code to run on each game loop
-		var newTime = (new Date).getTime(),
-			deltaTime = (newTime - Game.currentTime)/100
-		if(deltaTime > 0.25)
-			deltaTime = 0.25
-		Game.currentTime = newTime;
-		Game.accumulator += deltaTime;
-		while(Game.accumulator >= Game.dt) {
-			Game.accumulator -= Game.dt;
-			Game.tileEngine.integrator(Game.t, Game.dt);
-			Game.t += Game.dt;
-		}
-		
 		Game.tileEngine.drawFrame();
 		Game.fps_count++;  //increments frame for fps display
 	},
@@ -209,7 +193,7 @@ var Game = {
 		var mapObj = new Object(); //create tile engine initializer mapObject
 			mapObj.canvas = document.getElementById('main_canvas');
 			mapObj.ctx = mapObj.canvas.getContext('2d');
-			mapObj.renderCircular = false;
+			mapObj.renderCircular = true;
 			mapObj.init_x = 0;
 			mapObj.init_y = 0;
 			
@@ -267,6 +251,6 @@ if(canvas_support.check_canvas()){  //check canvas support before intializing
 	Game.initGame(); //initialize game object
 }
 else {
-	Console.addMessage('Your Browser Does not support this app!');	
+	Console.log('Your Browser Does not support this app!');	
 }
 

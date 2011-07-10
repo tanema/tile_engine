@@ -1,13 +1,14 @@
 function newPhysicsEngine(){
 	var p_e = {
 		tiles: 0, tile_width: 0, tile_height: 0,
-		bodies: new Array(), 
+		bodies: new Array(), render_circ: false,
 		init: function(TileEngine){
 			p_e.tiles = TileEngine.tiles
 			p_e.tile_width = TileEngine.tileWidth 
 			p_e.tile_height = TileEngine.tileHeight
 			p_e.map_width = TileEngine.mapWidth 
 			p_e.map_height = TileEngine.mapHeight
+			p_e.render_circ = TileEngine.renderCircular
 		},
 		inside_map: function(i, span){
 			return (i + span) % span
@@ -131,14 +132,14 @@ function newPhysicsEngine(){
 					x = body.x,
 					y = body.y;
 
-				if(x-width < 0){
-					body.x = width;
+				if(x < 0){
+					body.x = 0;
 				}
 				else if(x + width > p_e.map_width){
 					body.x = p_e.map_width-width;
 				}
-				if(y-height < 0){
-					body.y = height;
+				if(y < 0){
+					body.y = 0;
 				}
 				else if(y + height > p_e.map_height){
 					body.y = p_e.map_height-height;
@@ -167,10 +168,10 @@ function newPhysicsEngine(){
 		integrate: function(delta){
 			p_e.gravity();
 			p_e.accelerate(delta);
-			$("#pos").html(p_e.bodies[1].x.toFixed(2) +":"+p_e.bodies[1].y.toFixed(2)+":"+p_e.bodies[1].dx.toFixed(2) +":"+p_e.bodies[1].dy.toFixed(2))
 			//p_e.collide();
 			p_e.barrier_collide(delta);
-			//p_e.border_collide();
+			if(!p_e.render_circ)
+				p_e.border_collide();
 			p_e.inertia(delta);
 		},
 		add_actor: function(actor, x, y, width, height){
