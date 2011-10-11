@@ -130,70 +130,33 @@ var tilesPhysicsArray = [
 							0,0,0,0,0,0,0,0,0,
 						];
 
-var setBytes = function(num1,num2,num3) {
-	return (num1 << 18)| num2;//return (((num1 << 16) | (num2||0)) << 4) | (num3||0);
-};
-var makeMapTilesArray = function(tiles_a, decor_a){
-	var tilesArray = new Array()
-	var i = tiles_a.length
-	while(i--){
-		tilesArray[i] = setBytes(tiles_a[i], decor_a[i]);
-	}
-	return tilesArray;
-}
+
 var tilesArray1 = makeMapTilesArray(maptilesArray1, decorationtilesArray)
 var tilesArray2 = makeMapTilesArray(maptilesArray2, decorationtilesArray)
 
-//function to detect canvas support by alterebro (http://code.google.com/p/browser-canvas-support/)
-var canvas_support = {
-	canvas_compatible : false,
-	check_canvas : function() {
-		try {
-			this.canvas_compatible = !!(document.createElement('canvas').getContext('2d')); // S60
-			} catch(e) {
-			this.canvas_compatible = !!(document.createElement('canvas').getContext); // IE
-		} 
-		return this.canvas_compatible;
-	}
-} 
-
 var Game = {
-	gameTimer: 0, //holds id of main game timer
 	tileEngine: 0, //holds tile engine object
-	fps: 0, //hold element to display fps
-	fps_count: 0, //hold frame count
-	fps_timer: 0, //timer for FPS update (2 sec)
+  fps_el: 0, //fps elemnt to put the fps in
 	initGame: function() { //initialize game
-		Game.fps = 250; //set target fps to 250
 		Game.initGameData();
-		Game.startTimer(); //start game loop
-		Game.fps = document.getElementById('fps');
+		Game.fps_el = document.getElementById('fps');
 		Game.fps_timer = setInterval(Game.updateFPS, 2000);
+    Game.tileEngine.start(); //start game loop
 		Console.log("Main Loop Started");
 	},
-	startTimer: function(){ //start game loop
-		var interval = 1000 / Game.fps;
-		Game.gameTimer = setInterval(Game.runLoop, interval);
-	},
-	runLoop: function(){ //code to run on each game loop
-		Game.tileEngine.drawFrame();
-		Game.fps_count++;  //increments frame for fps display
-	},
 	updateFPS: function(){ //add new message
-		if(Game.fps){
-			$(Game.fps).html((Game.fps_count / 2) + 'fps');
-		}
-		Game.fps_count = 0;
+		if(Game.fps_el)
+			$(Game.fps_el).html(Game.tileEngine.fps + 'fps');
 	},
 	initGameData: function(){ //create and initialize tile engine
 		//change map type for testing
-		var large_map = false;
+		var large_map = true;
 		
 		Game.tileEngine = newTileEngine(); //create tile engine object
 		var mapObj = new Object(); //create tile engine initializer mapObject
 			mapObj.canvas = document.getElementById('main_canvas');
 			mapObj.ctx = mapObj.canvas.getContext('2d');
-			mapObj.renderCircular = true;
+			mapObj.renderCircular = false;
 			mapObj.init_x = 0;
 			mapObj.init_y = 0;
 			
@@ -247,10 +210,4 @@ var Game = {
 	}
 };
 
-if(canvas_support.check_canvas()){  //check canvas support before intializing
-	Game.initGame(); //initialize game object
-}
-else {
-	Console.log('Your Browser Does not support this app!');	
-}
-
+Game.initGame(); //initialize game object

@@ -173,11 +173,9 @@ function newPhysicsEngine(){
 		integrate: function(delta){
 			p_e.gravity();
 			p_e.accelerate(delta);
-			if(!p_e.ingnore_collide)
-				p_e.collide();
+			if(!p_e.ingnore_collide) p_e.collide();
 			p_e.barrier_collide(delta);
-			if(!p_e.render_circ)
-				p_e.border_collide();
+			if(!p_e.render_circ) p_e.border_collide();
 			p_e.inertia(delta);
 		},
 		add_actor: function(actor, x, y, width, height, ingnore_collide){

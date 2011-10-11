@@ -17,195 +17,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-var Console = { //object to create messages (using alert in a game loop will crash your browser)
-	console: 0, //hold element where messages will be added
-	hidden: true,
-	init: function(){
-		Console.console = $("<div id='console'>Loading...</br></div>")
-			.css('width', $('canvas').css('width'))
-			.insertAfter('canvas')
-	},
-	hide: function(){$(Console.console).hide('slow'); Console.hidden=true;},
-	show: function(){$(Console.console).show('slow'); Console.hidden=false;},
-	log: function(msg){ //add new message
-		if(Console.console){
-			$(Console.console).append('> '+msg+'<br />');
-			console.log(msg);
-		}
-	}
-};
-Console.init();
-
-function newMouse(){
-	var Mouse = {
-			down: false,offsetx: 0,offsety: 0,timer: 0,accelx: 0,accely: 0,
-			clickposx: 0,clickposy: 0,tileEngine:0,vel_x: 0,vel_y:0,view: 0,
-			init: function(context, tileEngine) {
-				Mouse.tileEngine = tileEngine;
-				Mouse.view = tileEngine.view;
-				$(context)
-						.mousedown(function(event)  {Mouse.setClickPos(event)})
-						.mouseup(function()  {Mouse.down = false;})
-						.mouseout(function() {Mouse.down = false;})
-						.mousemove(function(event) {Mouse.move(event);});
-			},
-			isDown: function() {return Mouse.down;},
-			setClickPos: function(event) { 
-				Mouse.tileEngine.active_controller = Mouse;
-				Mouse.clickposx = event.screenX;
-				Mouse.clickposy = event.screenY;
-				Mouse.down = true;
-			},
-			move: function(event) {
-				if (Mouse.isDown()) {
-					Mouse.timer++;
-					Mouse.offsetx = event.screenX - Mouse.clickposx;
-					Mouse.offsety = event.screenY - Mouse.clickposy;
-					Mouse.setClickPos(event);
-					Mouse.accelx = Mouse.offsetx / Mouse.timer;
-					Mouse.accely = Mouse.offsety / Mouse.timer;
-				} else {
-					Mouse.reset();
-				}
-			},
-			reset: function() {
-				Mouse.offsetx = 0;
-				Mouse.offsety = 0;
-				Mouse.accelx = 0;
-				Mouse.accely = 0;
-				Mouse.timer = 0;
-			},
-			accellerate: function(){
-				var thrust = 0.96
-				Mouse.vel_x = (Mouse.vel_x + (this.accelx / 10)) * thrust;
-				Mouse.vel_y = (Mouse.vel_y + (this.accely / 10)) * thrust;
-			},
-			update: function(){
-				Mouse.view.x = Mouse.view.tileEngine.renderCircular ? (Mouse.view.x-(Mouse.vel_x))%Mouse.view.tileEngine.mapWidth:(Mouse.view.x-(Mouse.vel_x))
-				Mouse.view.y = Mouse.view.tileEngine.renderCircular ? (Mouse.view.y-(Mouse.vel_y))%Mouse.view.tileEngine.mapHeight:(Mouse.view.y-(Mouse.vel_y))
-				Mouse.view.viewWidth = Mouse.view.x + Mouse.view.tileEngine.width;
-				Mouse.view.viewHeight = Mouse.view.y + Mouse.view.tileEngine.height;
-				
-				var rebound = 0.1;
-				if(!Mouse.tileEngine.renderCircular){
-					if(Mouse.view.x < 0 && !this.isDown())
-						Mouse.vel_x -= rebound;
-					if(Mouse.view.y < 0 && !this.isDown()) 
-						Mouse.vel_y -= rebound;
-					if(Mouse.view.viewWidth > Mouse.tileEngine.mapWidth && !this.isDown()) 
-						Mouse.vel_x += rebound;
-					if(Mouse.view.viewHeight > Mouse.tileEngine.mapHeight && !this.isDown()) 
-						Mouse.vel_y += rebound;
-				}
-				
-				this.reset();
-			}
-	};
-	return Mouse;
-}
-
-function newKeyboard(){
-	var keyboard = {
-		orientation: {}, actor: 0,LEFT: 37,RIGHT: 39,UP: 38,DOWN: 40,console: 192,
-		doc_click: false, ctx_click:false, _focus: false, ctx: 0,
-		thrust: 10,	maxSpeed: 100, view: 0, tile_engine:0, 
-		offset_x: 0, offset_y: 0, key_down: false,	
-		init: function(TileEngine, to_move) {
-			keyboard.ctx = TileEngine.canvas;
-			keyboard.tile_engine = TileEngine;
-			keyboard.actor = to_move;
-			TileEngine.physics_engine.add_actor(keyboard, to_move.x, to_move.y, to_move.width, to_move.height);
-			keyboard.offset_x = TileEngine.width * 0.5;
-			keyboard.offset_y = TileEngine.height * 0.5;
-			keyboard.ingnore_collide = true; //this stops the physics engine from thinking the keyboard is colliding with the actor
-			$(keyboard.ctx).mouseup(function(event){keyboard.ctx_click = true;})
-			$(document).keydown(function(event){keyboard.keydown(event)})
-								 .keyup(function(event){keyboard.keyup(event)})
-								 .mousedown(function(event){keyboard.mousedown(event)})
-								 .mouseup(function(event){keyboard.mouseup(event)})
-		},
-		keydown: function (event){
-			if(!keyboard._focus)
-				return
-			keyboard.orientation[event.keyCode] = true;
-			keyboard.tile_engine.active_controller = keyboard;
-			keyboard.key_down = true;
-		},
-		keyup: function (event){
-			keyboard.orientation[event.keyCode] = false;
-			keyboard.key_down = false;
-		},
-		mousedown: function (){
-			keyboard.doc_click = true;
-		},
-		mouseup: function (){
-			keyboard._focus = keyboard.ctx_click && keyboard.doc_click;
-			$('canvas').css("border", (keyboard._focus ? "2px solid lightblue":""))
-			if(keyboard._focus)
-				keyboard.setXY(keyboard.actor.x,keyboard.actor.y);
-			keyboard.doc_click = keyboard.ctx_click = false;
-		},
-		accellerate: function(){
-			if(!keyboard._focus)
-				return
-				
-			if(keyboard.orientation[keyboard.console]){
-				Console.hidden ? Console.show() : Console.hide();
-				keyboard.orientation[keyboard.console] = false
-			}
-			if (keyboard.orientation[keyboard.LEFT]){
-				keyboard.dx -= keyboard.thrust;
-				keyboard.actor.left();
-			}
-			if (keyboard.orientation[keyboard.RIGHT]){
-				keyboard.dx += keyboard.thrust;
-				keyboard.actor.right();
-			}
-			if (keyboard.orientation[keyboard.UP]){
-				keyboard.dy += keyboard.thrust;
-				keyboard.actor.up();
-			}
-			if (keyboard.orientation[keyboard.DOWN]){
-				keyboard.dy -= keyboard.thrust;
-				keyboard.actor.down();
-			}
-			//speed limit
-			var currentSpeed = Math.sqrt((keyboard.dx * keyboard.dx) + (keyboard.dy * keyboard.dy));
-			if (currentSpeed > keyboard.maxSpeed){
-				keyboard.dx *= keyboard.maxSpeed/currentSpeed;
-				keyboard.dy *= keyboard.maxSpeed/currentSpeed;
-			}
-		},
-		update: function (){
-			var mapwidth = keyboard.tile_engine.mapWidth,
-				  mapheight = keyboard.tile_engine.mapHeight;
-				  
-			if(keyboard.tile_engine.renderCircular){
-				if(keyboard.tile_engine.view.viewWidth >= mapwidth+mapwidth){
-					keyboard.tile_engine.view.x = 0;
-					keyboard.setXY( keyboard.x - mapwidth, keyboard.y)
-				}else if(keyboard.tile_engine.view.x <= -mapwidth){
-					keyboard.tile_engine.view.x = 0;
-					keyboard.setXY( keyboard.x + mapwidth, keyboard.y)
-				}
-				if(keyboard.tile_engine.view.viewHeight >= mapheight+mapheight){
-					keyboard.tile_engine.view.y = 0;
-					keyboard.setXY( keyboard.x, keyboard.y - mapheight )
-				}else if(keyboard.tile_engine.view.y <= -mapheight){
-					keyboard.tile_engine.view.y = 0;
-					keyboard.setXY( keyboard.x, keyboard.y + mapheight )
-				}
-			}
-			keyboard.actor.setXY( keyboard.x, keyboard.y)
-			keyboard.tile_engine.view.x = keyboard.tile_engine.view.x+(keyboard.x - (keyboard.tile_engine.view.x + keyboard.offset_x)) * 0.05
-			keyboard.tile_engine.view.y = keyboard.tile_engine.view.y+(keyboard.y - (keyboard.tile_engine.view.y + keyboard.offset_y)) * 0.05
-			keyboard.tile_engine.view.viewWidth = keyboard.tile_engine.view.x + keyboard.tile_engine.width;
-			keyboard.tile_engine.view.viewHeight = keyboard.tile_engine.view.y + keyboard.tile_engine.height;
-		}
-	}
-	return keyboard;
-}
-
 function newView(TileEngine, init_x, init_y, vw, vh){
 	var view = {
 		tileEngine:TileEngine,x: init_x || 0,y: init_y || 0,
@@ -350,9 +161,6 @@ function newSprite(){
 	return Sprite;  //returns newly created sprite object
 };
 
-function getBytes(num) {
-	return [num & 0x3FFFF, (num >> 18) & 0x3FFFF];//return [num & 0xF, (num >> 4) & 0xFFFF, (num >> 20) & 0xFFFF];
-};
 /*** function to create and then return a new Tile object */
 function newTile(){
 	var Tile = {
@@ -466,7 +274,7 @@ function newZone(){
 					//decoration cannot be at tile 0
 					if(check_tile.decorationIndex != 0 && view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.decorationIndex]){
 						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.decorationIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
-					}
+          }
 				}
 			}
 		}
@@ -505,9 +313,13 @@ function newTileEngine(){
 		dt: 0.01,
 		currentTime: (new Date).getTime(),
 		accumulator: 0.0,
+    gameTimer: 0, //holds id of main game timer
+    fps: 250,
+    fps_count: 0, //hold frame count
+    fps_timer: 0, //timer for FPS update (2 sec)
 		initialized: false,
 		init: function(){ //initialize experiment
-			if(!TileEngine.view)
+      if(!TileEngine.view)
 				alert("please set map attributes before initializing tile engine");
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
 			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
@@ -568,6 +380,20 @@ function newTileEngine(){
 			}
 			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update();
 		},
+    start: function(){
+      console.log("FPS limit set to: " + TileEngine.fps)
+      var interval = 1000 / TileEngine.fps;
+      TileEngine.gameTimer = setInterval(TileEngine.runLoop, interval);
+      TileEngine.fps_timer = setInterval(TileEngine.updateFPS, 2000);
+    },
+    runLoop: function(){ //code to run on each game loop
+      TileEngine.drawFrame();
+      TileEngine.fps_count++;  //increments frame for fps display
+    },
+    updateFPS: function(){
+      TileEngine.fps = TileEngine.fps_count / 2; // every two seconds cut the fps by 2
+      TileEngine.fps_count = 0; // every two seconds cut the fps by 2
+    },
 		drawFrame: function(){ //main drawing function
 			if(!TileEngine.initialized)//still loading
 				return
@@ -575,11 +401,14 @@ function newTileEngine(){
 			//physics
 			TileEngine.integrator();
 			
+			//clear main canvas
+			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  
+      
 			//draw()
-			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  //clear main canvas
-			if(TileEngine.zones){
+      if(TileEngine.zones)
 				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
-			}
+			
+      //do brightness of the screen
 			TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
 			TileEngine.ctx.fillRect(0,0,TileEngine.width, TileEngine.height);
 		},
@@ -752,7 +581,15 @@ function newTileEngine(){
 		}
 	}
 	
-	return TileEngine;
+  Console.init();
+  if(canvas_support.check_canvas()){  //check canvas support before intializing
+    return TileEngine;
+  }
+  else {
+    return false;
+    Console.log('Your Browser Does not support this app!');	
+  }
+	
 };
 
 
