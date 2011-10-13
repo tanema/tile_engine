@@ -3,7 +3,7 @@ function newSprite(){
 	var Sprite = {
 		sourceHash: 0, tileEngine: 0,current_index:0, current_direction: 0,
 		init: function(x, y, width, height, sourceHash, te){ //initialize sprite
-			te.physics_engine.add_actor(Sprite, x, y, width, height);
+			te.physics_engine.add_actor(Sprite, x, y, width, height, true);
 			Sprite.sourceHash = sourceHash;
 			Sprite.tileEngine = te;
 			Sprite.current_direction = Sprite.sourceHash.up

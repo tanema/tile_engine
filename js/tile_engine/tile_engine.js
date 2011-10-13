@@ -118,12 +118,8 @@ function newTileEngine(){
     start: function(){
       console.log("FPS limit set to: " + TileEngine.fps)
       var interval = 1000 / TileEngine.fps;
-      TileEngine.gameTimer = setInterval(TileEngine.runLoop, interval);
+      TileEngine.gameTimer = setInterval(TileEngine.drawFrame, interval);
       TileEngine.fps_timer = setInterval(TileEngine.updateFPS, 2000);
-    },
-    runLoop: function(){ //code to run on each game loop
-      TileEngine.drawFrame();
-      TileEngine.fps_count++;  //increments frame for fps display
     },
     updateFPS: function(){
       TileEngine.fps = TileEngine.fps_count / 2; // every two seconds cut the fps by 2
@@ -146,6 +142,8 @@ function newTileEngine(){
       //do brightness of the screen
 			TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
 			TileEngine.ctx.fillRect(0,0,TileEngine.width, TileEngine.height);
+      
+      TileEngine.fps_count++;  //increments frame for fps display
 		},
 		renderCirc: function(view){
 			var i = TileEngine.zones.length,
