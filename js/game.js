@@ -210,4 +210,4 @@ var Game = {
 	}
 };
 
-Game.initGame(); //initialize game object
+$(function(){Game.initGame();}) //initialize game object
