@@ -60,6 +60,13 @@ function newTileEngine(){
 			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
 			TileEngine.physics_engine.init(TileEngine)
 			TileEngine.initialized = true;
+      
+      //Active controller handling
+      $(TileEngine.canvas).mouseup(function(event){TileEngine.ctx_click = true;})
+			$(document).keydown(function(event){if(TileEngine._focus)TileEngine.active_controller = TileEngine.keyboard})
+                 .mousedown(function(event){TileEngine.active_controller = TileEngine.mouse;TileEngine.doc_click = true;})
+                 .mouseup(function(event){TileEngine._focus = TileEngine.ctx_click && TileEngine.doc_click;TileEngine.doc_click = TileEngine.ctx_click = false;})
+      
 			Console.log("Tile Map Initialized");
 		},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
