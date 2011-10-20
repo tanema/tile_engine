@@ -10,7 +10,10 @@ function Body(x, y, width, height){
         this.y = y;
       },
       accelerate: function(delta){
-        var last = this.x
+        if(this.director){
+          this.dx = this.director.dx; 
+          this.dy = this.director.dy;
+        }
         this.x += this.dx * delta * delta;
         this.y -= this.dy * delta * delta;	
       },

@@ -1,11 +1,14 @@
 
-function newView(TileEngine, init_x, init_y, vw, vh){
+function newView(TileEngine){
 	var view = {
-		tileEngine:TileEngine,x: init_x || 0,y: init_y || 0,
-		viewWidth: vw || 0,	viewHeight: vh || 0,xoffset: 0,
+		tileEngine:TileEngine,x:0,y:0,
+		viewWidth: 0,	viewHeight: 0,xoffset: 0,director: null,
 		yoffset: 0,
-		init: function(x,y){
-			view.update()
+		init: function(dir,x,y){
+			view.x = x || 0;
+			view.y = y || 0;
+      view.director = dir
+      view.update()
 		},
 		update : function(){
 			view.x = view.tileEngine.renderCircular ? view.x%view.tileEngine.mapWidth:view.x

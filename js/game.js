@@ -150,7 +150,7 @@ var Game = {
 	},
 	initGameData: function(){ //create and initialize tile engine
 		//change map type for testing
-		var large_map = true;
+		var large_map = false;
 		
 		Game.tileEngine = newTileEngine(); //create tile engine object
 		var mapObj = new Object(); //create tile engine initializer mapObject

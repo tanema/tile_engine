@@ -57,7 +57,7 @@ function newTileEngine(){
       if(!TileEngine.view)
 				alert("please set map attributes before initializing tile engine");
 			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
-			TileEngine.keyboard.init(TileEngine, TileEngine.main_sprite)
+			TileEngine.keyboard.init()
 			TileEngine.physics_engine.init(TileEngine)
 			TileEngine.initialized = true;
       
@@ -84,7 +84,8 @@ function newTileEngine(){
 			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
 			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
 			TileEngine.view = newView(TileEngine);
-			TileEngine.view.init(obj.init_x,obj.init_y);
+			TileEngine.view.init(TileEngine.mouse, obj.init_x,obj.init_y);
+      TileEngine.physics_engine.add_actor(TileEngine.view, obj.init_x, obj.init_y, TileEngine.width, TileEngine.height, true);
 			
 			Console.log(obj.sourceTileCounts + ' Source Tiles to Load');
 			Console.log(obj.tilesArray.length + ' Map Tiles to Load');
@@ -98,17 +99,16 @@ function newTileEngine(){
 		},
 		setMainSpriteAttributes: function(obj){ 
 			TileEngine.main_sprite = newSprite();
-			TileEngine.main_sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, TileEngine)
-			var source = newSourceImage();  
+			TileEngine.main_sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, TileEngine.keyboard)
+			TileEngine.physics_engine.add_actor(TileEngine.main_sprite, obj.init_x, obj.init_y, obj.width, obj.height);
+      var source = newSourceImage();  
 			source.init(obj.sourceFile);
 			source.image.onload = function(){  //event handler for image load 
 				TileEngine.spriteSource = TileEngine.createTileSource(obj.width, obj.height, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
 			TileEngine.sprites.push(TileEngine.main_sprite)
 		},
-		integrator: function(t,dt){
-			TileEngine.active_controller ? TileEngine.active_controller.accellerate():null;
-		
+		integrator: function(t,dt){		
 			var newTime = (new Date).getTime(),
 				deltaTime = (newTime - TileEngine.currentTime)/100
 			if(deltaTime > 0.25)
