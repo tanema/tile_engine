@@ -83,7 +83,7 @@ function newTileEngine(){
 			TileEngine.renderCircular |= obj.renderCircular;
 			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
 			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
-			TileEngine.view = newView(TileEngine);
+			TileEngine.view = newView(TileEngine.width, TileEngine.height, TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular);
 			TileEngine.view.init(TileEngine.mouse, obj.init_x,obj.init_y);
       TileEngine.physics_engine.add_actor(TileEngine.view, obj.init_x, obj.init_y, TileEngine.width, TileEngine.height, true);
 			
@@ -98,7 +98,7 @@ function newTileEngine(){
 			TileEngine.createTiles(obj.tilesArray, obj.physicsArray);
 		},
 		setMainSpriteAttributes: function(obj){ 
-			TileEngine.main_sprite = newSprite();
+			TileEngine.main_sprite = newSprite(TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular);
 			TileEngine.main_sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, TileEngine.keyboard)
 			TileEngine.physics_engine.add_actor(TileEngine.main_sprite, obj.init_x, obj.init_y, obj.width, obj.height);
       var source = newSourceImage();  

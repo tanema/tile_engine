@@ -143,6 +143,13 @@ function newPhysicsEngine(){
 				p_e.bodies[i].inertia(delta);
 			}
 		},
+    update: function(){
+			var i = p_e.bodies_length
+			while(i--){
+        if(p_e.bodies[i].update)
+          p_e.bodies[i].update();
+			}
+		},
 		integrate: function(delta){
 			p_e.gravity();
 			p_e.accelerate(delta);
@@ -150,6 +157,7 @@ function newPhysicsEngine(){
 			p_e.barrier_collide(delta);
 			if(!p_e.render_circ) p_e.border_collide();
 			p_e.inertia(delta);
+      p_e.update();
 		},
 		add_actor: function(actor, x, y, width, height, ingnore_collide){
 			var body = Body(x, y, width, height);
