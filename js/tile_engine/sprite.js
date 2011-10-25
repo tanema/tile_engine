@@ -9,8 +9,8 @@ function newSprite(mapWidth, mapHeight, renderCircular){
 		},
 		update: function(){
       if(renderCircular){
-				Sprite.x = (Sprite.x+mapWidth)%mapWidth
-				Sprite.y = (Sprite.y+mapHeight)%mapHeight
+				Sprite.x = Sprite.x%mapWidth
+				Sprite.y = Sprite.y%mapHeight
 			}  
 		},
 		current_frame: function(){

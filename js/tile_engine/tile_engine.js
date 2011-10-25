@@ -56,10 +56,11 @@ function newTileEngine(){
 		init: function(){ //initialize experiment
       if(!TileEngine.view)
 				alert("please set map attributes before initializing tile engine");
-			TileEngine.mouse.init(TileEngine.canvas, TileEngine)
-			TileEngine.keyboard.init()
+			TileEngine.mouse.init(TileEngine.canvas)
+			TileEngine.keyboard.init(TileEngine.canvas)
 			TileEngine.physics_engine.init(TileEngine)
-			TileEngine.initialized = true;
+      TileEngine.view.init(TileEngine.mouse, TileEngine.main_sprite, TileEngine.isKeyBoardActive);
+			
       
       //Active controller handling
       $(TileEngine.canvas).mouseup(function(event){TileEngine.ctx_click = true;})
@@ -67,8 +68,11 @@ function newTileEngine(){
                  .mousedown(function(event){TileEngine.active_controller = TileEngine.mouse;TileEngine.doc_click = true;})
                  .mouseup(function(event){TileEngine._focus = TileEngine.ctx_click && TileEngine.doc_click;TileEngine.doc_click = TileEngine.ctx_click = false;})
       
+      TileEngine.initialized = true;
 			Console.log("Tile Map Initialized");
 		},
+    isKeyBoardActive: function(){return TileEngine.active_controller == TileEngine.keyboard},
+    isMouseActive: function(){return TileEngine.active_controller == TileEngine.mouse},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
 			TileEngine.ctx = obj.ctx; //create main drawing canvas
@@ -83,8 +87,7 @@ function newTileEngine(){
 			TileEngine.renderCircular |= obj.renderCircular;
 			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
 			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
-			TileEngine.view = newView(TileEngine.width, TileEngine.height, TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular);
-			TileEngine.view.init(TileEngine.mouse, obj.init_x,obj.init_y);
+			TileEngine.view = newView(obj.init_x,obj.init_y, TileEngine.width, TileEngine.height, TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular);
       TileEngine.physics_engine.add_actor(TileEngine.view, obj.init_x, obj.init_y, TileEngine.width, TileEngine.height, true);
 			
 			Console.log(obj.sourceTileCounts + ' Source Tiles to Load');
