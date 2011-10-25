@@ -16,7 +16,7 @@ function newView(x, y, width, height, mapWidth, mapHeight, renderCircular){
         view.x = view.x+(view.main_sprite.x - (view.x + width/2)) * 0.05
         view.y = view.y+(view.main_sprite.y - (view.y + height/2)) * 0.05
         if(renderCircular){
-          if((view.x + width) >= mapWidth+mapWidth){
+          if((view.x + width) >= mapWidth+mapWidth-1){
             view.x = 0;
             view.main_sprite.setXY( view.main_sprite.x - mapWidth, view.main_sprite.y)
           }else if(view.x <= -mapWidth){
@@ -51,6 +51,7 @@ function newView(x, y, width, height, mapWidth, mapHeight, renderCircular){
           }
         }
       }
+        
       view.viewWidth = view.x + width;
       view.viewHeight = view.y + height;
 		},
