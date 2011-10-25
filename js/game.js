@@ -146,7 +146,7 @@ var Game = {
 	},
 	updateFPS: function(){ //add new message
 		if(Game.fps_el)
-			$(Game.fps_el).html(Game.tileEngine.fps + 'fps');
+			$(Game.fps_el).html(Game.tileEngine.fps.toFixed(0) + 'fps');
 	},
 	initGameData: function(){ //create and initialize tile engine
 		//change map type for testing

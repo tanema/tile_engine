@@ -16,20 +16,21 @@ function newView(x, y, width, height, mapWidth, mapHeight, renderCircular){
         view.x = view.x+(view.main_sprite.x - (view.x + width/2)) * 0.05
         view.y = view.y+(view.main_sprite.y - (view.y + height/2)) * 0.05
         if(renderCircular){
-          if(view.viewWidth >= mapWidth+mapWidth){
+          if((view.x + width) >= mapWidth+mapWidth){
             view.x = 0;
             view.main_sprite.setXY( view.main_sprite.x - mapWidth, view.main_sprite.y)
           }else if(view.x <= -mapWidth){
             view.x = 0;
             view.main_sprite.setXY( view.main_sprite.x + mapWidth, view.main_sprite.y)
           }
-          if(view.viewHeight > mapHeight+mapHeight){
+          if((view.y + height) > mapHeight+mapHeight){
             view.y = 0;
             view.main_sprite.setXY( view.main_sprite.x, view.main_sprite.y - mapHeight )
           }else if(view.y < -mapHeight){
             view.y = 0;
             view.main_sprite.setXY( view.main_sprite.x, view.main_sprite.y + mapHeight )
           }
+          
         }
       }else{ // mouse control
         if(renderCircular){
@@ -49,7 +50,6 @@ function newView(x, y, width, height, mapWidth, mapHeight, renderCircular){
             view.py = view.py+mapHeight
           }
         }
-        
       }
       view.viewWidth = view.x + width;
       view.viewHeight = view.y + height;
