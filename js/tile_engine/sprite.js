@@ -6,36 +6,31 @@ function newSprite(mapWidth, mapHeight, renderCircular, ctx){
 			Sprite.director = director;
 			Sprite.sourceHash = sourceHash;
 			Sprite.current_direction = Sprite.sourceHash.up
+      setInterval(Sprite.update_index, 100)
 		},
 		update: function(){
       if(renderCircular){
 				Sprite.x = Sprite.x%mapWidth
 				Sprite.y = Sprite.y%mapHeight
-			}  
+			}
+      if(Sprite.dx > 1)
+        Sprite.current_direction = Sprite.sourceHash.right
+      if(Sprite.dx < -1)
+        Sprite.current_direction = Sprite.sourceHash.left
+      if(Sprite.dy > 1)
+        Sprite.current_direction = Sprite.sourceHash.up
+      if(Sprite.dy < -1)
+        Sprite.current_direction = Sprite.sourceHash.down
 		},
 		current_frame: function(){
 			return Sprite.current_direction[Sprite.current_index];
 		},
-		up: function(){
-			Sprite.current_direction = Sprite.sourceHash.up
-			Sprite.update_index()
-		},
-		down: function(){
-			Sprite.current_direction = Sprite.sourceHash.down
-			Sprite.update_index()
-		},
-		left: function(){
-			Sprite.current_direction = Sprite.sourceHash.left
-			Sprite.update_index()
-		},
-		right: function(){
-			Sprite.current_direction = Sprite.sourceHash.right
-			Sprite.update_index()
-		},
 		update_index: function(){
-			Sprite.current_index++;
-			if(Sprite.current_index >= Sprite.current_direction.length)
-				Sprite.current_index = 0
+			if(Sprite.dx > 1 || Sprite.dx < -1 || Sprite.dy > 1 || Sprite.dy < -1){
+        Sprite.current_index++;
+        if(Sprite.current_index >= Sprite.current_direction.length)
+          Sprite.current_index = 0
+      }
 		},
 		draw: function(view, views){
 			if(views){
