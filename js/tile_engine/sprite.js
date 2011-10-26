@@ -1,5 +1,5 @@
 
-function newSprite(mapWidth, mapHeight, renderCircular){
+function newSprite(mapWidth, mapHeight, renderCircular, ctx){
 	var Sprite = {
 		sourceHash: 0,current_index:0, current_direction: 0, director: null,
 		init: function(x, y, width, height, sourceHash, director){ //initialize sprite
@@ -37,17 +37,17 @@ function newSprite(mapWidth, mapHeight, renderCircular){
 			if(Sprite.current_index >= Sprite.current_direction.length)
 				Sprite.current_index = 0
 		},
-		draw: function(te, views){
+		draw: function(view, views){
 			if(views){
 				var v = views.length;
 				while(v--){
 					var currentView = views[v];
-					if(te.spriteSource && currentView.isInView(Sprite)){
-						te.ctx.drawImage(te.spriteSource[Sprite.current_frame()].canvas, (Sprite.x+currentView.xoffset)-te.view.x, (Sprite.y+currentView.yoffset)-te.view.y);
+					if(Sprite.spriteSource && currentView.isInView(Sprite)){
+						ctx.drawImage(Sprite.spriteSource[Sprite.current_frame()].canvas, (Sprite.x+currentView.xoffset)-view.x, (Sprite.y+currentView.yoffset)-view.y);
 					}
 				}
-			}else if(te.spriteSource && te.view.isInView(Sprite))
-				te.ctx.drawImage(te.spriteSource[Sprite.current_frame()].canvas, Sprite.x-te.view.x, Sprite.y-te.view.y);
+			}else if(Sprite.spriteSource && view.isInView(Sprite))
+				ctx.drawImage(Sprite.spriteSource[Sprite.current_frame()].canvas, Sprite.x-view.x, Sprite.y-view.y);
 			
 		}
 	};

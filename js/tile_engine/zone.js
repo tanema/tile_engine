@@ -71,7 +71,7 @@ function newZone(){
 					}
 					if(check_tile.darker != 0){
 						Zone.base_ctx.fillStyle = "rgba(0,0,0," + check_tile.darker + ")";    
-						Zone.base_ctx.fillRect(check_tile.local_x,check_tile.local_y,Zone.tileEngine.tileWidth, Zone.tileEngine.tileHeight);
+						Zone.base_ctx.fillRect(check_tile.local_x,check_tile.local_y,Zone.tileWidth, Zone.tileHeight);
 						check_tile.darker = 0;
 					}
 				}

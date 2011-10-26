@@ -4,13 +4,13 @@ function newPhysicsEngine(){
 		bodies: new Array(), collidable_bodies: new Array(),
     render_circ: false,
 		ingnore_collide: false,
-		init: function(TileEngine){
-			p_e.tiles = TileEngine.tiles
-			p_e.tile_width = TileEngine.tileWidth 
-			p_e.tile_height = TileEngine.tileHeight
-			p_e.map_width = TileEngine.mapWidth 
-			p_e.map_height = TileEngine.mapHeight
-			p_e.render_circ = TileEngine.renderCircular
+		init: function(tiles, tileWidth, tileHeight, mapWidth, mapHeight, renderCircular){
+			p_e.tiles = tiles
+			p_e.tile_width = tileWidth 
+			p_e.tile_height = tileHeight
+			p_e.map_width = mapWidth 
+			p_e.map_height = mapHeight
+			p_e.render_circ = renderCircular
 		},
 		inside_map: function(i, span){
 			return (i + span) % span
