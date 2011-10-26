@@ -156,7 +156,7 @@ var Game = {
 		var mapObj = new Object(); //create tile engine initializer mapObject
 			mapObj.canvas = document.getElementById('main_canvas');
 			mapObj.ctx = mapObj.canvas.getContext('2d');
-			mapObj.renderCircular = false;
+			mapObj.renderCircular = true;
 			mapObj.init_x = 0;
 			mapObj.init_y = 0;
 			

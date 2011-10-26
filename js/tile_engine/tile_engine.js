@@ -167,7 +167,7 @@ function newTileEngine(){
 					if(currentView.isInView(check_zone)){
 						validZones.push(check_zone.forDecoration(currentView));
 						check_zone.drawTiles(currentView);
-						TileEngine.ctx.drawImage(check_zone.canvas, Math.round((check_zone.x+currentView.xoffset)-view.x), Math.round((check_zone.y+currentView.yoffset)-view.y));
+						TileEngine.ctx.drawImage(check_zone.base_canvas, Math.round((check_zone.x+currentView.xoffset)-view.x), Math.round((check_zone.y+currentView.yoffset)-view.y));
 					}
 				}
 			}
@@ -184,7 +184,7 @@ function newTileEngine(){
 				var check_zone = validZones[i],
 					currentView = check_zone.viewoffset;
 				check_zone.drawDecorations(currentView);
-				TileEngine.ctx.drawImage(check_zone.canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
+				TileEngine.ctx.drawImage(check_zone.dec_canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
 			}
 		},
 		renderNorm: function(view){
@@ -196,7 +196,7 @@ function newTileEngine(){
 				if(view.isInView(check_zone)){
 					validZones.push(check_zone.forDecoration(view));
 					check_zone.drawTiles(view);
-					TileEngine.ctx.drawImage(check_zone.canvas, Math.round(check_zone.x-view.x), Math.round(check_zone.y-view.y));
+					TileEngine.ctx.drawImage(check_zone.base_canvas, Math.round(check_zone.x-view.x), Math.round(check_zone.y-view.y));
 				} 
 			}
 			
@@ -211,7 +211,7 @@ function newTileEngine(){
 			while(i--){
 				var check_zone = validZones[i];
 				check_zone.drawDecorations(view);
-				TileEngine.ctx.drawImage(check_zone.canvas, check_zone.x-view.x, check_zone.y-view.y);
+				TileEngine.ctx.drawImage(check_zone.dec_canvas, check_zone.x-view.x, check_zone.y-view.y);
 			}
 		},
 		getCurrentViews: function(view){

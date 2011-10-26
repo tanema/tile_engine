@@ -1,9 +1,11 @@
 
 function newZone(){
 	var Zone = {
-		canvas: 0, //zone canvas object
+		base_canvas: 0, //zone canvas object
+		dec_canvas: 0, //zone canvas object
 		tileEngine: 0, //the main tile engine object (used to fetch tile sources)
-		ctx: 0, //zone canvas drawing context
+		base_ctx: 0, //zone canvas drawing context
+		dec_ctx: 0, //zone canvas drawing context
 		left: 0, //x position of this zone in the tile map
 		top: 0, //y position of this zone in the tile map
 		right: 0, //x position of right edge
@@ -26,10 +28,14 @@ function newZone(){
 			Zone.tileHeight = tileHeight;
 			Zone.width = width;
 			Zone.height = height;
-			Zone.canvas = document.createElement('canvas');
-			Zone.ctx = Zone.canvas.getContext('2d'); //create main drawing canvas
-			Zone.canvas.setAttribute('width', width); //set tile source canvas size
-			Zone.canvas.setAttribute('height', height);
+			Zone.base_canvas = document.createElement('canvas');
+			Zone.base_ctx = Zone.base_canvas.getContext('2d'); //create main drawing canvas
+      Zone.dec_canvas = document.createElement('canvas');
+			Zone.dec_ctx = Zone.dec_canvas.getContext('2d'); //create main drawing canvas
+			Zone.base_canvas.setAttribute('width', width); //set tile source canvas size
+			Zone.base_canvas.setAttribute('height', height);
+      Zone.dec_canvas.setAttribute('width', width); //set tile source canvas size
+			Zone.dec_canvas.setAttribute('height', height);
 			Zone.tiles = new Array();
 		},
 		addTile: function(tile){
@@ -55,17 +61,17 @@ function newZone(){
 			}
 		},
 		drawTiles: function(view){
-			Zone.ctx.clearRect(0,0,Zone.width, Zone.height);
+			Zone.base_ctx.clearRect(0,0,Zone.width, Zone.height);
 			if(Zone.tiles){
 				var i = Zone.tiles.length;
 				while(i--){
 					var check_tile = Zone.tiles[i];
 					if(view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.baseSourceIndex]){
-						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.baseSourceIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
+						Zone.base_ctx.drawImage(Zone.tileEngine.tileSource[check_tile.baseSourceIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
 					}
 					if(check_tile.darker != 0){
-						Zone.ctx.fillStyle = "rgba(0,0,0," + check_tile.darker + ")";    
-						Zone.ctx.fillRect(check_tile.local_x,check_tile.local_y,Zone.tileEngine.tileWidth, Zone.tileEngine.tileHeight);
+						Zone.base_ctx.fillStyle = "rgba(0,0,0," + check_tile.darker + ")";    
+						Zone.base_ctx.fillRect(check_tile.local_x,check_tile.local_y,Zone.tileEngine.tileWidth, Zone.tileEngine.tileHeight);
 						check_tile.darker = 0;
 					}
 				}
@@ -77,14 +83,14 @@ function newZone(){
 			return v;
 		},
 		drawDecorations: function(view){
-			Zone.ctx.clearRect(0,0,Zone.width, Zone.height);
+			Zone.dec_ctx.clearRect(0,0,Zone.width, Zone.height);
 			if(Zone.tiles){
 				var i = Zone.tiles.length;
 				while(i--){
 					var check_tile = Zone.tiles[i];
 					//decoration cannot be at tile 0
 					if(check_tile.decorationIndex != 0 && view.isInView(check_tile) && Zone.tileEngine.tileSource[check_tile.decorationIndex]){
-						Zone.ctx.drawImage(Zone.tileEngine.tileSource[check_tile.decorationIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
+						Zone.dec_ctx.drawImage(Zone.tileEngine.tileSource[check_tile.decorationIndex].canvas, check_tile.local_x, check_tile.local_y); //draw tile based on its source index and position
           }
 				}
 			}
