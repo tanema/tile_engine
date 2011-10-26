@@ -99,16 +99,20 @@ function newTileEngine(){
 			TileEngine.createTiles(obj.tilesArray, obj.physicsArray);
 		},
 		setMainSpriteAttributes: function(obj){ 
-			TileEngine.main_sprite = newSprite(TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular, TileEngine.ctx);
-			TileEngine.main_sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, TileEngine.keyboard)
-			TileEngine.physics_engine.add_actor(TileEngine.main_sprite, obj.init_x, obj.init_y, obj.width, obj.height);
+			TileEngine.main_sprite = TileEngine.addSprite(obj, TileEngine.keyboard)
+		},
+    addSprite: function(obj, director){
+      var sprite = newSprite(TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular, TileEngine.ctx);
+      sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, director)
+			TileEngine.physics_engine.add_actor(sprite, obj.init_x, obj.init_y, obj.width, obj.height);
       var source = newSourceImage();  
 			source.init(obj.sourceFile);
 			source.image.onload = function(){  //event handler for image load 
-				TileEngine.main_sprite.spriteSource = TileEngine.createTileSource(obj.width, obj.height, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
+				sprite.spriteSource = TileEngine.createTileSource(obj.width, obj.height, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
-			TileEngine.sprites.push(TileEngine.main_sprite)
-		},
+      TileEngine.sprites.push(sprite)
+      return sprite;
+    },
 		integrator: function(t,dt){		
 			var newTime = (new Date).getTime(),
 				deltaTime = (newTime - TileEngine.currentTime)/100
