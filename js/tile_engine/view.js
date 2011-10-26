@@ -51,6 +51,19 @@ function newView(x, y, width, height, mapWidth, mapHeight, renderCircular){
           }
         }
       }
+      
+      if(!renderCircular){
+        if((view.x+width) > mapWidth){
+          view.x = mapWidth-width;
+        }else if(view.x < 0){
+          view.x = 0;
+        }
+        if((view.y+height) > mapHeight){
+          view.y = mapHeight-height;
+        }else if(view.y < 0){
+          view.y = 0
+        }
+      }
         
       view.viewWidth = view.x + width;
       view.viewHeight = view.y + height;
