@@ -78,9 +78,9 @@ function newPhysicsEngine(){
         }
         
         if((Math.round(body.dy*2)/2) != 0){
-          var this_x = x
+          var this_x = x,
               this_y = (body.dy < 0) ? p_e.to_unit(y+body.height+1, p_e.tile_height, map_height) : y,
-              to_x = p_e.inside_map(body.x+body.width,map_width)
+              to_x = p_e.inside_map(body.x+body.width,map_width);
           if(this_x > to_x){
             do{
               p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].darker = 0.4;

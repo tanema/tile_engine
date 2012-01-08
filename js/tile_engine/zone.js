@@ -78,7 +78,7 @@ function newZone(){
 			}
 		},
 		forDecoration: function(view){
-			var v = $.extend({}, this);
+			var v = $.extend({}, Zone);
 				v.viewoffset = view
 			return v;
 		},
