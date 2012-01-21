@@ -1,5 +1,5 @@
 
-function newView(x, y, width, height, mapWidth, mapHeight, renderCircular){
+function newView(x, y, width, height, mapWidth, mapHeight){
 	var view = {
 		x:x || 0,y:y || 0,viewWidth: 0,	viewHeight: 0,
     director: null, xoffset: 0, yoffset: 0, isControllingSprite: 0,
@@ -15,54 +15,17 @@ function newView(x, y, width, height, mapWidth, mapHeight, renderCircular){
       if(view.isControllingSprite()){
         view.x = view.x+(view.main_sprite.x - (view.x + width/2)) * 0.05
         view.y = view.y+(view.main_sprite.y - (view.y + height/2)) * 0.05
-        if(renderCircular){
-          if((view.x + width) >= mapWidth+mapWidth-1){
-            view.x = 0;
-            view.main_sprite.setXY( view.main_sprite.x - mapWidth, view.main_sprite.y)
-          }else if(view.x <= -mapWidth){
-            view.x = 0;
-            view.main_sprite.setXY( view.main_sprite.x + mapWidth, view.main_sprite.y)
-          }
-          if((view.y + height) > mapHeight+mapHeight){
-            view.y = 0;
-            view.main_sprite.setXY( view.main_sprite.x, view.main_sprite.y - mapHeight )
-          }else if(view.y < -mapHeight){
-            view.y = 0;
-            view.main_sprite.setXY( view.main_sprite.x, view.main_sprite.y + mapHeight )
-          }
-          
-        }
-      }else{ // mouse control
-        if(renderCircular){
-          if(view.x > mapWidth){
-            view.x = view.x-mapWidth;
-            view.px = view.px-mapWidth;
-          }else if(view.x < -mapWidth){
-            view.x = view.x+mapWidth
-            view.px = view.px+mapWidth
-          }
-          
-          if(view.y > mapHeight){
-            view.y = view.y-mapHeight
-            view.py = view.py-mapHeight
-          }else if(view.y < -mapHeight){
-            view.y = view.y+mapHeight
-            view.py = view.py+mapHeight
-          }
-        }
       }
       
-      if(!renderCircular){
-        if((view.x+width) > mapWidth){
-          view.x = mapWidth-width;
-        }else if(view.x < 0){
-          view.x = 0;
-        }
-        if((view.y+height) > mapHeight){
-          view.y = mapHeight-height;
-        }else if(view.y < 0){
-          view.y = 0
-        }
+      if((view.x+width) > mapWidth){
+        view.x = mapWidth-width;
+      }else if(view.x < 0){
+        view.x = 0;
+      }
+      if((view.y+height) > mapHeight){
+        view.y = mapHeight-height;
+      }else if(view.y < 0){
+        view.y = 0
       }
         
       view.viewWidth = view.x + width;

@@ -39,7 +39,6 @@ function newTileEngine(){
 		mouse: newMouse(),
 		keyboard: newKeyboard(),
 		physics_engine: newPhysicsEngine(),
-		renderCircular: false,
 		timeofDay: 0.2,
 		view : 0,
 		active_controller: 0,
@@ -47,30 +46,31 @@ function newTileEngine(){
 		dt: 0.01,
 		currentTime: (new Date).getTime(),
 		accumulator: 0.0,
-    gameTimer: 0, //holds id of main game timer
-    fps: 250,
-    fps_count: 0, //hold frame count
-    fps_timer: 0, //timer for FPS update (2 sec)
+	    gameTimer: 0, //holds id of main game timer
+	    fps: 250,
+	    fps_count: 0, //hold frame count
+	    fps_timer: 0, //timer for FPS update (2 sec)
 		initialized: false,
+		
 		init: function(){ //initialize experiment
-      if(!TileEngine.view)
+      		if(!TileEngine.view)
 				alert("please set map attributes before initializing tile engine");
 			TileEngine.mouse.init(TileEngine.canvas)
 			TileEngine.keyboard.init(TileEngine.canvas)
-			TileEngine.physics_engine.init(TileEngine.tiles, TileEngine.tileWidth, TileEngine.tileHeight,TileEngine.mapWidth, TileEngine.mapHeight, TileEngine.renderCircular)
-      TileEngine.view.init(TileEngine.mouse, TileEngine.main_sprite, TileEngine.isKeyBoardActive);
+			TileEngine.physics_engine.init(TileEngine.tiles, TileEngine.tileWidth, TileEngine.tileHeight,TileEngine.mapWidth, TileEngine.mapHeight)
+      		TileEngine.view.init(TileEngine.mouse, TileEngine.main_sprite, TileEngine.isKeyBoardActive);
 			
-      //Active controller handling
-      $(TileEngine.canvas).mouseup(function(event){TileEngine.ctx_click = true;})
+	        //Active controller handling
+	        $(TileEngine.canvas).mouseup(function(event){TileEngine.ctx_click = true;})
 			$(document).keydown(function(event){if(TileEngine._focus)TileEngine.active_controller = TileEngine.keyboard})
-                 .mousedown(function(event){TileEngine.active_controller = TileEngine.mouse;TileEngine.doc_click = true;})
-                 .mouseup(function(event){TileEngine._focus = TileEngine.ctx_click && TileEngine.doc_click;TileEngine.doc_click = TileEngine.ctx_click = false;})
+		                .mousedown(function(event){TileEngine.active_controller = TileEngine.mouse;TileEngine.doc_click = true;})
+		                .mouseup(function(event){TileEngine._focus = TileEngine.ctx_click && TileEngine.doc_click;TileEngine.doc_click = TileEngine.ctx_click = false;})
       
-      TileEngine.initialized = true;
+      		TileEngine.initialized = true;
 			Console.log("Tile Map Initialized");
 		},
-    isKeyBoardActive: function(){return TileEngine.active_controller == TileEngine.keyboard},
-    isMouseActive: function(){return TileEngine.active_controller == TileEngine.mouse},
+    	isKeyBoardActive: function(){return TileEngine.active_controller == TileEngine.keyboard},
+    	isMouseActive: function(){return TileEngine.active_controller == TileEngine.mouse},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
 			TileEngine.canvas = obj.canvas;  //get canvas element from html
 			TileEngine.ctx = obj.ctx; //create main drawing canvas
@@ -82,11 +82,10 @@ function newTileEngine(){
 			TileEngine.zoneTilesHigh = obj.zoneTilesHigh;
 			TileEngine.tilesWide = obj.tilesWide;
 			TileEngine.tilesHigh = obj.tilesHigh;
-			TileEngine.renderCircular |= obj.renderCircular;
 			TileEngine.mapWidth = TileEngine.tilesWide*TileEngine.tileWidth
 			TileEngine.mapHeight = TileEngine.tilesHigh*TileEngine.tileHeight
-			TileEngine.view = newView(obj.init_x,obj.init_y, TileEngine.width, TileEngine.height, TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular);
-      TileEngine.physics_engine.add_actor(TileEngine.view, obj.init_x, obj.init_y, TileEngine.width, TileEngine.height, true);
+			TileEngine.view = newView(obj.init_x,obj.init_y, TileEngine.width, TileEngine.height, TileEngine.mapWidth,TileEngine.mapHeight);
+      		TileEngine.physics_engine.add_actor(TileEngine.view, obj.init_x, obj.init_y, TileEngine.width, TileEngine.height, true);
 			
 			Console.log(obj.sourceTileCounts + ' Source Tiles to Load');
 			Console.log(obj.tilesArray.length + ' Map Tiles to Load');
@@ -98,21 +97,19 @@ function newTileEngine(){
 			}
 			TileEngine.createTiles(obj.tilesArray, obj.physicsArray);
 		},
-		setMainSpriteAttributes: function(obj){ 
-			TileEngine.main_sprite = TileEngine.addSprite(obj, TileEngine.keyboard)
-		},
-    addSprite: function(obj, director){
-      var sprite = newSprite(TileEngine.mapWidth,TileEngine.mapHeight,TileEngine.renderCircular, TileEngine.ctx);
-      sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, director)
+		setMainSpriteAttributes: function(obj){TileEngine.main_sprite = TileEngine.addSprite(obj, TileEngine.keyboard)},
+    	addSprite: function(obj, director){
+      		var sprite = newSprite(TileEngine.mapWidth,TileEngine.mapHeight, TileEngine.ctx);
+      		sprite.init(obj.init_x, obj.init_y, obj.width, obj.height, obj.movement_hash, director)
 			TileEngine.physics_engine.add_actor(sprite, obj.init_x, obj.init_y, obj.width, obj.height);
-      var source = newSourceImage();  
+      		var source = newSourceImage();  
 			source.init(obj.sourceFile);
 			source.image.onload = function(){  //event handler for image load 
 				sprite.spriteSource = TileEngine.createTileSource(obj.width, obj.height, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
-      TileEngine.sprites.push(sprite)
-      return sprite;
-    },
+      		TileEngine.sprites.push(sprite)
+      		return sprite;
+    	},
 		integrator: function(t,dt){		
 			var newTime = (new Date).getTime(),
 				deltaTime = (newTime - TileEngine.currentTime)/100
@@ -127,16 +124,16 @@ function newTileEngine(){
 			}
 			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update();
 		},
-    start: function(){
-      console.log("FPS limit set to: " + TileEngine.fps)
-      var interval = 1000 / TileEngine.fps;
-      TileEngine.gameTimer = setInterval(TileEngine.drawFrame, interval);
-      TileEngine.fps_timer = setInterval(TileEngine.updateFPS, 2000);
-    },
-    updateFPS: function(){
-      TileEngine.fps = TileEngine.fps_count / 2; // every two seconds cut the fps by 2
-      TileEngine.fps_count = 0; // every two seconds cut the fps by 2
-    },
+    	start: function(){
+      		console.log("FPS limit set to: " + TileEngine.fps)
+      		var interval = 1000 / TileEngine.fps;
+      		TileEngine.gameTimer = setInterval(TileEngine.drawFrame, interval);
+      		TileEngine.fps_timer = setInterval(TileEngine.updateFPS, 2000);
+    	},
+    	updateFPS: function(){
+      		TileEngine.fps = TileEngine.fps_count / 2; // every two seconds cut the fps by 2
+      		TileEngine.fps_count = 0; // every two seconds cut the fps by 2
+    	},
 		drawFrame: function(){ //main drawing function
 			if(!TileEngine.initialized)//still loading
 				return
@@ -148,48 +145,16 @@ function newTileEngine(){
 			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  
       
 			//draw()
-      if(TileEngine.zones)
-				(TileEngine.renderCircular ? TileEngine.renderCirc(TileEngine.view): TileEngine.renderNorm(TileEngine.view));
+      		if(TileEngine.zones)
+				TileEngine.render(TileEngine.view);
 			
-      //do brightness of the screen
+      		//do brightness of the screen
 			TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
 			TileEngine.ctx.fillRect(0,0,TileEngine.width, TileEngine.height);
       
-      TileEngine.fps_count++;  //increments frame for fps display
+      		TileEngine.fps_count++;  //increments frame for fps display
 		},
-		renderCirc: function(view){
-			var i = TileEngine.zones.length,
-					validZones = new Array(),
-					views = TileEngine.getCurrentViews(view);
-			//main map
-			while(i--){
-				var check_zone = TileEngine.zones[i],v = views.length;
-				while(v--){
-					var currentView = views[v]
-					if(currentView.isInView(check_zone)){
-						validZones.push(check_zone.forDecoration(currentView));
-						check_zone.drawTiles(currentView);
-						TileEngine.ctx.drawImage(check_zone.base_canvas, Math.round((check_zone.x+currentView.xoffset)-view.x), Math.round((check_zone.y+currentView.yoffset)-view.y));
-					}
-				}
-			}
-			
-			//sprites
-			i = TileEngine.sprites.length
-			while(i--){
-				TileEngine.sprites[i].draw(view, views)
-			}
-			
-			//decorations
-			i = validZones.length;
-			while(i--){
-				var check_zone = validZones[i],
-					currentView = check_zone.viewoffset;
-				check_zone.drawDecorations(currentView);
-				TileEngine.ctx.drawImage(check_zone.dec_canvas, (check_zone.x+currentView.xoffset)-view.x, (check_zone.y+currentView.yoffset)-view.y);
-			}
-		},
-		renderNorm: function(view){
+		render: function(view){
 			var i = TileEngine.zones.length,
 					validZones = new Array();
 			//base map
@@ -326,15 +291,14 @@ function newTileEngine(){
 		}
 	}
 	
-  Console.init();
-  if(CanvasSupport.check_canvas()){  //check canvas support before intializing
-    return TileEngine;
-  }
-  else {
-    return false;
-    Console.log('Your Browser Does not support this app!');	
-  }
-	
+  	Console.init();
+  	if(CanvasSupport.check_canvas()){  //check canvas support before intializing
+    	return TileEngine;
+  	}
+  	else {
+    	Console.log('Your Browser Does not support this app!');	
+    	return false;
+  	}
 };
 
 

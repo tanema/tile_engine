@@ -2,15 +2,13 @@ function newPhysicsEngine(){
 	var p_e = {
 		tiles: 0, tile_width: 0, tile_height: 0,
 		bodies: new Array(), collidable_bodies: new Array(),
-    render_circ: false,
 		ingnore_collide: false,
-		init: function(tiles, tileWidth, tileHeight, mapWidth, mapHeight, renderCircular){
+		init: function(tiles, tileWidth, tileHeight, mapWidth, mapHeight){
 			p_e.tiles = tiles
 			p_e.tile_width = tileWidth 
 			p_e.tile_height = tileHeight
 			p_e.map_width = mapWidth 
 			p_e.map_height = mapHeight
-			p_e.render_circ = renderCircular
 		},
 		inside_map: function(i, span){
 			return (i + span) % span
@@ -47,58 +45,58 @@ function newPhysicsEngine(){
 			var i = p_e.collidable_bodies_length
 			while(i--){
 				var body = p_e.collidable_bodies[i];
-        
-        var tile_width = p_e.tile_width,tile_height = p_e.tile_height,
-            map_width = p_e.map_width,map_height = p_e.map_height,
-            x = p_e.to_unit(body.x, tile_width, map_width),
-            y = p_e.to_unit(body.y, tile_height, map_height);
-            
-        if((Math.round(body.dx*2)/2)!= 0){
-          var this_y = y,
-              this_x = (body.dx > 0) ? p_e.to_unit(x+body.width, tile_width, map_width) : x,
-              to_y = p_e.inside_map(body.y+body.height,map_height)
-          
-          if(this_y > to_y){
-            do{
-              p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].darker = 0.4;
-              if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0){
-                body.x -= body.dx * delta * delta;
-                return;
-              }
-            }while((this_y += p_e.tile_height) < map_height)
-            to_y = 0;
-          }
-          do{
-            p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].darker = 0.4;
-            if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0){
-              body.x -= body.dx * delta * delta;
-              return;
-            }
-          }while((this_y += p_e.tile_height) < to_y)
-        }
-        
-        if((Math.round(body.dy*2)/2) != 0){
-          var this_x = x,
-              this_y = (body.dy < 0) ? p_e.to_unit(y+body.height+1, p_e.tile_height, map_height) : y,
-              to_x = p_e.inside_map(body.x+body.width,map_width);
-          if(this_x > to_x){
-            do{
-              p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].darker = 0.4;
-              if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0){
-                body.y += body.dy * delta * delta;
-                return;
-              }
-            }while((this_x += p_e.tile_width) < map_width)
-            this_x = 0;
-          }
-          do{
-            p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].darker = 0.4;
-            if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0){
-              body.y += body.dy * delta * delta;
-              return;
-            }
-          }while((this_x += p_e.tile_width) < to_x)
-        }
+	        
+		        var tile_width = p_e.tile_width,tile_height = p_e.tile_height,
+		            map_width = p_e.map_width,map_height = p_e.map_height,
+		            x = p_e.to_unit(body.x, tile_width, map_width),
+		            y = p_e.to_unit(body.y, tile_height, map_height);
+		            
+		        if((Math.round(body.dx*2)/2)!= 0){
+		          	var this_y = y,
+						this_x = (body.dx > 0) ? p_e.to_unit(x+body.width, tile_width, map_width) : x,
+						to_y = p_e.inside_map(body.y+body.height,map_height)
+		          
+		          	if(this_y > to_y){
+		            	do{
+		              		p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].darker = 0.4;
+		              		if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0){
+		                		body.x -= body.dx * delta * delta;
+		                		return;
+		              		}
+		            	}while((this_y += p_e.tile_height) < map_height)
+		            	to_y = 0;
+		          	}
+		          	do{
+		            	p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].darker = 0.4;
+		            	if(p_e.tiles[this_x][p_e.inside_map(this_y,map_height)].physicsID != 0){
+		              		body.x -= body.dx * delta * delta;
+		              		return;
+		            	}
+		          	}while((this_y += p_e.tile_height) < to_y)
+		        }
+		        
+		        if((Math.round(body.dy*2)/2) != 0){
+		          	var this_x = x,
+		              	this_y = (body.dy < 0) ? p_e.to_unit(y+body.height+1, p_e.tile_height, map_height) : y,
+		              	to_x = p_e.inside_map(body.x+body.width,map_width);
+		          	if(this_x > to_x){
+		            	do{
+		              		p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].darker = 0.4;
+		              		if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0){
+		                		body.y += body.dy * delta * delta;
+		                		return;
+		              		}
+		            	}while((this_x += p_e.tile_width) < map_width)
+		            	this_x = 0;
+		          	}
+		          	do{
+		            	p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].darker = 0.4;
+		            	if(p_e.tiles[p_e.inside_map(this_x,map_width)][this_y].physicsID != 0){
+		              		body.y += body.dy * delta * delta;
+		              		return;
+		            	}
+		          	}while((this_x += p_e.tile_width) < to_x)
+		        }
 			}
 		},
 		border_collide: function(){
@@ -143,28 +141,28 @@ function newPhysicsEngine(){
 				p_e.bodies[i].inertia(delta);
 			}
 		},
-    update: function(){
+	    update: function(){
 			var i = p_e.bodies_length
 			while(i--){
-        if(p_e.bodies[i].update)
-          p_e.bodies[i].update();
-			}
-		},
+	        	if(p_e.bodies[i].update)
+	          		p_e.bodies[i].update();
+				}
+			},
 		integrate: function(delta){
 			p_e.gravity();
 			p_e.accelerate(delta);
 			p_e.collide();
 			p_e.barrier_collide(delta);
-			if(!p_e.render_circ) p_e.border_collide();
+			p_e.border_collide();
 			p_e.inertia(delta);
-      p_e.update();
+			p_e.update();
 		},
 		add_actor: function(actor, x, y, width, height, ingnore_collide){
 			var body = Body(x, y, width, height);
 			$.extend(actor, body);
 			p_e.bodies.push(actor)
-      if(!ingnore_collide)
-        p_e.collidable_bodies.push(actor)
+	      	if(!ingnore_collide)
+	        	p_e.collidable_bodies.push(actor)
 			p_e.bodies_length = p_e.bodies.length
 			p_e.collidable_bodies_length = p_e.collidable_bodies.length
 		}
