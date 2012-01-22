@@ -56,7 +56,7 @@ function newPhysicsEngine(){
 	          	do{
 	            	p_e.tiles[this_x][this_y].darker = 0.4;
 	            	if(p_e.tiles[this_x][this_y].physicsID != 0){
-	              		body.x = body.dx > 0 ? this_x+p_e.tile_width:this_x-p_e.tile_width;
+	              		body.x = body.dx > 0 ? this_x-p_e.tile_width:this_x+p_e.tile_width;
 	              		return;
 	            	}
 	          	}while((this_y += p_e.tile_height) < to_y)
