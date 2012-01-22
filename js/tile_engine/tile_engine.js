@@ -126,7 +126,7 @@ function newTileEngine(){
 			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update();
 		},
     	start: function(){
-      		console.log("FPS limit set to: " + TileEngine.fps)
+      		Console.log("FPS limit set to: " + TileEngine.fps)
       		var interval = 1000 / TileEngine.fps;
       		TileEngine.gameTimer = setInterval(TileEngine.drawFrame, interval);
       		TileEngine.fps_timer = setInterval(TileEngine.updateFPS, 2000);

@@ -71,11 +71,11 @@ function newPhysicsEngine(){
 		            x = p_e.to_unit(body.x, p_e.tile_width),
 		            y = p_e.to_unit(body.y, p_e.tile_height);
 		        if(Math.abs(body.dx) > Math.abs(body.dy)){
-		        	if(!p_e.barrier_collide_x(body,x,y))
-		        		p_e.barrier_collide_y(body,x,y);
+		        	p_e.barrier_collide_x(body,x,y);
+		        	p_e.barrier_collide_y(body,x,y);
 		        }else{
-		        	if(!p_e.barrier_collide_y(body,x,y))
-		        		p_e.barrier_collide_x(body,x,y);
+		        	p_e.barrier_collide_y(body,x,y);
+		        	p_e.barrier_collide_x(body,x,y);
 		        }
 			}
 		},

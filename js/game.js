@@ -112,7 +112,7 @@ var decorationtilesArray = [
 var tilesPhysicsArray = [ 
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
-							0,0,0,0,0,0,0,0,0,
+							1,1,0,1,1,1,1,1,1,
 							0,0,1,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
@@ -121,7 +121,7 @@ var tilesPhysicsArray = [
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
-							0,0,0,0,0,0,0,0,0,
+							1,1,0,0,1,1,1,1,1,
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
 							0,0,0,0,0,0,0,0,0,
@@ -190,8 +190,8 @@ var Game = {
 		Game.tileEngine.setMapAttributes(mapObj);
 		
 		var spriteObj = new Object();
-			spriteObj.init_x = 32;
-			spriteObj.init_y = 32;
+			spriteObj.init_x = 64;
+			spriteObj.init_y = 84;
 			spriteObj.width = 32; 
 			spriteObj.height = 32;
 			spriteObj.sourceFile = 'images/tiles.png';
