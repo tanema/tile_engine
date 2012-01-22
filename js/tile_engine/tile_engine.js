@@ -24,6 +24,7 @@ function newTileEngine(){
 		tiles: 0, //double dimenal array by coordinates
 		zones: 0, //array of tile zones
 		tileSource: 0, //array of tile source objects, one for each unique tile
+		tileSourcesHash: {},
 		width: 0, //width of tile map
 		height: 0,  //height of tile map
 		zoneTilesWide: 0, //width in tiles of a zone
@@ -202,9 +203,12 @@ function newTileEngine(){
 			return views;
 		},
 		createTileSource: function(tileWidth, tileHeight, count, accross, offset_x, offset_y, source){ //create tiles sources
+			if(TileEngine.tileSourcesHash[source.sourceFile])
+				return TileEngine.tileSourcesHash[source.sourceFile]
+
 			var source_array = new Array(),
-					accross_count = 0,x = 0,y = 0,
-					offset_x_count = 0, offset_y_count = 0;
+				accross_count = 0,x = 0,y = 0,
+				offset_x_count = 0, offset_y_count = 0;
 			
 			for(var i = 0; i < count; i++){
 				var new_tileSource = newTileSource();
@@ -216,12 +220,14 @@ function newTileEngine(){
 				if(accross_count >= accross){
 					accross_count = 0;
 					y += tileHeight;
-					offset_y_count++;
 					x = 0;
+					offset_y_count++;
 					offset_x_count = 0;
 				}
 			}
-			return source_array;
+			//save in the hash that way two file are not needed 
+			TileEngine.tileSourcesHash[source.sourceFile] = source_array;
+			return TileEngine.tileSourcesHash[source.sourceFile];
 		},
 		createZones: function(){//create array of zones for map
 			TileEngine.zones = new Array();
@@ -239,19 +245,20 @@ function newTileEngine(){
 				for(var i = 0; i < zone_wide; i++) //loop through zone columns
 				{
 					var new_zone = newZone(); //create new zone
+					
 					var x = i * TileEngine.zoneTilesWide * TileEngine.tileWidth //set x pos of new zone
 					var y = h * TileEngine.zoneTilesHigh * TileEngine.tileHeight //set y pos of new zone
+					
 					var width = TileEngine.zoneTilesWide * TileEngine.tileWidth; //set width of new zone
 					var tiles_wide = TileEngine.zoneTilesWide //set tiles wide for new zone
-					if(i == (zone_wide - 1) && x_remainder > 0)  //if is last zone on horizontal row and tiles divide unevenly into zones
-					{
+					if(i == (zone_wide - 1) && x_remainder > 0){  //if is last zone on horizontal row and tiles divide unevenly into zones
 						tiles_wide = x_remainder; //change new zone tiles wide to be correct
 						width = tiles_wide * TileEngine.tileWidth;  //change new zone width to be correct
 					}
+
 					var height = TileEngine.zoneTilesHigh * TileEngine.tileHeight; //set height of new zone
 					var tiles_high = TileEngine.zoneTilesHigh //set tiles high for new zone
-					if(h == (zone_high - 1) && y_remainder > 0) //if last zones on bottom and tiles divide unevenly into zones
-					{
+					if(h == (zone_high - 1) && y_remainder > 0){ //if last zones on bottom and tiles divide unevenly into zones
 						tiles_high = y_remainder; //adjust tiles high
 						height = tiles_high * TileEngine.tileHeight; //adjust zone height
 					}
