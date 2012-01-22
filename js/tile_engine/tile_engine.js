@@ -203,8 +203,9 @@ function newTileEngine(){
 			return views;
 		},
 		createTileSource: function(tileWidth, tileHeight, count, accross, offset_x, offset_y, source){ //create tiles sources
-			if(TileEngine.tileSourcesHash[source.sourceFile])
-				return TileEngine.tileSourcesHash[source.sourceFile]
+			if(TileEngine.tileSourcesHash[source.imageFilename])
+				return TileEngine.tileSourcesHash[source.imageFilename]
+
 
 			var source_array = new Array(),
 				accross_count = 0,x = 0,y = 0,
@@ -226,8 +227,8 @@ function newTileEngine(){
 				}
 			}
 			//save in the hash that way two file are not needed 
-			TileEngine.tileSourcesHash[source.sourceFile] = source_array;
-			return TileEngine.tileSourcesHash[source.sourceFile];
+			TileEngine.tileSourcesHash[source.imageFilename] = source_array;
+			return TileEngine.tileSourcesHash[source.imageFilename];
 		},
 		createZones: function(){//create array of zones for map
 			TileEngine.zones = new Array();
@@ -263,7 +264,7 @@ function newTileEngine(){
 						height = tiles_high * TileEngine.tileHeight; //adjust zone height
 					}
 					
-					new_zone.init(TileEngine, x, y, tiles_wide, TileEngine.zoneTilesHigh, TileEngine.tileWidth, TileEngine.tileHeight, width, height); //intitialize new zone
+					new_zone.init(TileEngine, x, y, TileEngine.tileWidth, TileEngine.tileHeight, width, height); //intitialize new zone
 					TileEngine.zones.push(new_zone); //push zone to tile engine array
 				}
 			}

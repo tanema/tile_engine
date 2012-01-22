@@ -38,38 +38,45 @@ function newPhysicsEngine(){
 				}
 			}
 		},
+		barrier_collide_x: function (body, x, y){
+          	var to_y = body.y+body.height,
+          		this_y = y,
+				this_x = (body.dx > 0) ? p_e.to_unit(x+body.width, p_e.tile_width) : x
+          	do{
+            	p_e.tiles[this_x][this_y].darker = 0.4;
+            	if(p_e.tiles[this_x][this_y].physicsID != 0){
+              		body.x = body.dx > 0 ? this_x-p_e.tile_width:this_x+p_e.tile_width;
+              		return true;
+            	}
+          	}while((this_y += p_e.tile_height) < to_y)
+          	return false;
+        },
+    	barrier_collide_y: function (body, x, y){
+          	var to_x = body.x+body.width,
+          		this_x = x,
+          		this_y = (body.dy < 0) ? p_e.to_unit(y+body.height,p_e.tile_height) : y;
+          	do{
+            	p_e.tiles[this_x][this_y].darker = 0.4;
+            	if(p_e.tiles[this_x][this_y].physicsID != 0){
+              		body.y = body.dy > 0 ? this_y+p_e.tile_height:this_y-p_e.tile_height;
+              		return true;
+            	}
+          	}while((this_x += p_e.tile_width) < to_x)
+          	return false;
+        },
 		barrier_collide: function(delta){
 			var i = p_e.collidable_bodies_length
-			var tile_width = p_e.tile_width,
-        		tile_height = p_e.tile_height,
-	            map_width = p_e.map_width,
-	            map_height = p_e.map_height;
 			while(i--){
 				var body = p_e.collidable_bodies[i],
-		            x = p_e.to_unit(body.x, tile_width),
-		            y = p_e.to_unit(body.y, tile_height),
-		            to_y = body.y+body.height,
-					to_x = body.x+body.width;
-	          
-	          	var this_y = y,
-					this_x = (body.dx > 0) ? p_e.to_unit(x+body.width, tile_width) : x
-	          	do{
-	            	p_e.tiles[this_x][this_y].darker = 0.4;
-	            	if(p_e.tiles[this_x][this_y].physicsID != 0){
-	              		body.x = body.dx > 0 ? this_x-p_e.tile_width:this_x+p_e.tile_width;
-	              		return;
-	            	}
-	          	}while((this_y += p_e.tile_height) < to_y)
-	        
-	          	this_x = x;
-              	this_y = (body.dy < 0) ? p_e.to_unit(y+body.height+1, p_e.tile_height) : y;
-	          	do{
-	            	p_e.tiles[this_x][this_y].darker = 0.4;
-	            	if(p_e.tiles[this_x][this_y].physicsID != 0){
-	              		body.y = body.dy > 0 ? this_y+p_e.tile_height:this_y-p_e.tile_height;
-	              		return;
-	            	}
-	          	}while((this_x += p_e.tile_width) < to_x)
+		            x = p_e.to_unit(body.x, p_e.tile_width),
+		            y = p_e.to_unit(body.y, p_e.tile_height);
+		        if(body.dx > body.dy){
+		        	p_e.barrier_collide_x(body,x,y);
+		        	p_e.barrier_collide_y(body,x,y);
+		        }else{
+		        	p_e.barrier_collide_y(body,x,y);
+		        	p_e.barrier_collide_x(body,x,y);
+		        }
 			}
 		},
 		border_collide: function(){

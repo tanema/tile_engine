@@ -18,7 +18,7 @@ function newZone(){
 		y: 0,
 		viewoffset: 0,
 		tiles: 0, //array of tiles in this zone
-		init: function(engine, left, top, tilesWide, tilesHigh, tileWidth, tileHeight, width, height){
+		init: function(engine, left, top, tileWidth, tileHeight, width, height){
 			Zone.tileEngine = engine;
 			Zone.left = Zone.x = left;
 			Zone.top = Zone.y = top;

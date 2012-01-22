@@ -1,16 +1,16 @@
 /*** function to create and then return a new Tile object */
 function newTile(){
 	var Tile = {
-		x: 0, // X position of this tile
-		y: 0, //Y position of this tile
-		local_x:0,
+		x: 0, // X and Y position of this tile
+		y: 0, //
+		local_x:0, //local x and y of thier position within thier zones
 		local_y:0,
-		width: 0, //width and height of this tile
+		width: 0,
 		height: 0,
 		baseSourceIndex: 0, //index of tile source in tile engine's source array
-		decorationIndex: 0,
-		physicsID: 0,
-		darker: 0,
+		decorationIndex: 0, //index of secondary layer 
+		physicsID: 0, //physics type
+		darker: 0, // mostly for debug but also for cool effect later maybe!
 		init: function(x, y, width, height, source_index, physics_id){ //initialize sprite
 			Tile.x = x;
 			Tile.y = y;
