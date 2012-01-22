@@ -3,10 +3,12 @@ function Body(x, y, width, height){
       x: x, y: y, px: x, py: y, dx: 0, dy: 0,
       width: width, height: height,
       decay: 0.97,
-      setXY: function(x,y){
+      setX: function(x){
         this.px = x;
-        this.py = y;
         this.x = x;
+      },
+      setY: function(y){
+        this.py = y;
         this.y = y;
       },
       accelerate: function(delta){

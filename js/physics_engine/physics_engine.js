@@ -45,7 +45,7 @@ function newPhysicsEngine(){
           	do{
             	p_e.tiles[this_x][this_y].darker = 0.4;
             	if(p_e.tiles[this_x][this_y].physicsID != 0){
-              		body.x = body.dx > 0 ? this_x-p_e.tile_width:this_x+p_e.tile_width;
+              		body.setX(body.dx >= 0 ? this_x-p_e.tile_width:this_x+p_e.tile_width);
               		return true;
             	}
           	}while((this_y += p_e.tile_height) < to_y)
@@ -58,7 +58,7 @@ function newPhysicsEngine(){
           	do{
             	p_e.tiles[this_x][this_y].darker = 0.4;
             	if(p_e.tiles[this_x][this_y].physicsID != 0){
-              		body.y = body.dy > 0 ? this_y+p_e.tile_height:this_y-p_e.tile_height;
+              		body.setY(body.dy >= 0 ? this_y+p_e.tile_height:this_y-p_e.tile_height);
               		return true;
             	}
           	}while((this_x += p_e.tile_width) < to_x)
@@ -70,12 +70,12 @@ function newPhysicsEngine(){
 				var body = p_e.collidable_bodies[i],
 		            x = p_e.to_unit(body.x, p_e.tile_width),
 		            y = p_e.to_unit(body.y, p_e.tile_height);
-		        if(body.dx > body.dy){
-		        	p_e.barrier_collide_x(body,x,y);
-		        	p_e.barrier_collide_y(body,x,y);
+		        if(Math.abs(body.dx) > Math.abs(body.dy)){
+		        	if(!p_e.barrier_collide_x(body,x,y))
+		        		p_e.barrier_collide_y(body,x,y);
 		        }else{
-		        	p_e.barrier_collide_y(body,x,y);
-		        	p_e.barrier_collide_x(body,x,y);
+		        	if(!p_e.barrier_collide_y(body,x,y))
+		        		p_e.barrier_collide_x(body,x,y);
 		        }
 			}
 		},
