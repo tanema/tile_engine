@@ -208,7 +208,7 @@ function newTileEngine(){
 			var zone_wide = Math.ceil(TileEngine.tilesWide/TileEngine.zoneTilesWide); //how many zones are there horizontally
 			
 			function getX(index){return TileEngine.tileWidth * (index % TileEngine.tilesWide)}
-			function getY(index){return TileEngine.tileHeight * parseInt(index / TileEngine.tilesHigh)}
+			function getY(index){return TileEngine.tileHeight * parseInt(index / TileEngine.tilesWide)}
 
 			for(var h = 0, hh = TileEngine.tilesHigh; h < hh; h++)
 			{
@@ -218,11 +218,15 @@ function newTileEngine(){
 						TileEngine.tiles[i*TileEngine.tileWidth] = new Array();
 
 					x_zone = Math.floor(i/TileEngine.zoneTilesWide);// calculate which horizontal zone we are in
+					
 					var new_tile = newTile(); //create new tile object
-					//tile index x and y
+
 					new_tile.init(getX(tile_index), getY(tile_index), TileEngine.tileWidth, TileEngine.tileHeight, tilesArray[tile_index], physicsArray[tile_index]); //init tile
 					zone_index = (y_zone * zone_wide) + x_zone;//find what zone to add to using vert and horizontal positions
+					
 					TileEngine.zones[zone_index].addTile(new_tile); //add tile to zone
+					TileEngine.tiles[new_tile.x][new_tile.y] = new_tile; //add tile to tile engine
+					
 					tile_index++;
 				}
 				 x_zone = 0; //reset horizontal position when we loop to new row

@@ -39,14 +39,11 @@ function newZone(){
 			Zone.tiles = new Array();
 		},
 		getX: function (index){return Zone.tileWidth * (index % (Zone.width / Zone.tileWidth))},
-		getY: function (index){return Zone.tileHeight * parseInt(index / (Zone.height / Zone.tileHeight))},
+		getY: function (index){return Zone.tileHeight * parseInt(index / (Zone.height / Zone.tileWidth))},
 		addTile: function(tile){
 			var index = Zone.tiles.push(tile) - 1;	
 			tile.local_x = Zone.getX(index);
 			tile.local_y = Zone.getY(index);
-			tile.x = tile.local_x + Zone.x;
-			tile.y = tile.local_y + Zone.y;
-			Zone.tileEngine.tiles[tile.x][tile.y] = tile;
 		},
 		drawTiles: function(view){
 			Zone.base_ctx.clearRect(0,0,Zone.width, Zone.height);
