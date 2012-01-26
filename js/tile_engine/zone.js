@@ -38,27 +38,15 @@ function newZone(){
 			Zone.dec_canvas.setAttribute('height', height);
 			Zone.tiles = new Array();
 		},
+		getX: function (index){return Zone.tileWidth * (index % (Zone.width / Zone.tileWidth))},
+		getY: function (index){return Zone.tileHeight * parseInt(index / (Zone.height / Zone.tileHeight))},
 		addTile: function(tile){
-			Zone.tiles.push(tile);	
-		},
-		arrangeTiles: function(tiles_a){
-			var tiles_wide = Zone.width / Zone.tileWidth,
-					tiles_high = Zone.height / Zone.tileHeight,
-					index = 0;
-			for(var i = 0; i < tiles_high; i++){
-				for(var j = 0; j < tiles_wide; j++){
-					var temp_x = j * Zone.tileWidth + Zone.x,
-						temp_y = i * Zone.tileHeight + Zone.y;
-					Zone.tiles[index].x = temp_x
-					Zone.tiles[index].y = temp_y
-					Zone.tiles[index].local_x = j * Zone.tileWidth;
-					Zone.tiles[index].local_y = i * Zone.tileHeight;
-					if(!tiles_a[temp_x])
-						tiles_a[temp_x] = new Array()
-					tiles_a[temp_x][temp_y] = Zone.tiles[index]
-					index++;
-				}
-			}
+			var index = Zone.tiles.push(tile) - 1;	
+			tile.local_x = Zone.getX(index);
+			tile.local_y = Zone.getY(index);
+			tile.x = tile.local_x + Zone.x;
+			tile.y = tile.local_y + Zone.y;
+			Zone.tileEngine.tiles[tile.x][tile.y] = tile;
 		},
 		drawTiles: function(view){
 			Zone.base_ctx.clearRect(0,0,Zone.width, Zone.height);
@@ -76,11 +64,6 @@ function newZone(){
 					}
 				}
 			}
-		},
-		forDecoration: function(view){
-			var v = $.extend({}, Zone);
-				v.viewoffset = view
-			return v;
 		},
 		drawDecorations: function(view){
 			Zone.dec_ctx.clearRect(0,0,Zone.width, Zone.height);

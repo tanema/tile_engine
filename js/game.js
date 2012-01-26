@@ -136,12 +136,12 @@ var tilesArray2 = makeMapTilesArray(maptilesArray2, decorationtilesArray)
 
 var Game = {
 	tileEngine: 0, //holds tile engine object
-  fps_el: 0, //fps elemnt to put the fps in
+  	fps_el: 0, //fps elemnt to put the fps in
 	initGame: function() { //initialize game
 		Game.initGameData();
 		Game.fps_el = document.getElementById('fps');
 		Game.fps_timer = setInterval(Game.updateFPS, 2000);
-    Game.tileEngine.start(); //start game loop
+    	Game.tileEngine.start(); //start game loop
 		Console.log("Main Loop Started");
 	},
 	updateFPS: function(){ //add new message

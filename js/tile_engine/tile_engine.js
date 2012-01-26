@@ -21,8 +21,8 @@ function newTileEngine(){
 	var TileEngine = { //main canvas and demo container
 		canvas: 0, //main canvas object
 		ctx: 0, //main canvas drawing context
-		tiles: 0, //double dimenal array by coordinates
-		zones: 0, //array of tile zones
+		tiles: new Array(), //double dimenal array by coordinates
+		zones: new Array(), //array of tile zones
 		tileSource: 0, //array of tile source objects, one for each unique tile
 		tileSourcesHash: {},
 		width: 0, //width of tile map
@@ -51,7 +51,6 @@ function newTileEngine(){
 	    fps: 250,
 	    fps_count: 0, //hold frame count
 	    fps_timer: 0, //timer for FPS update (2 sec)
-		initialized: false,
 		
 		init: function(){ //initialize experiment
       		if(!TileEngine.view)
@@ -66,10 +65,18 @@ function newTileEngine(){
 			$(document).keydown(function(event){if(TileEngine._focus)TileEngine.active_controller = TileEngine.keyboard})
 		                .mousedown(function(event){TileEngine.active_controller = TileEngine.mouse;TileEngine.doc_click = true;})
 		                .mouseup(function(event){TileEngine._focus = TileEngine.ctx_click && TileEngine.doc_click;TileEngine.doc_click = TileEngine.ctx_click = false;})
-      
-      		TileEngine.initialized = true;
 			Console.log("Tile Map Initialized");
 		},
+		start: function(){
+      		Console.log("FPS limit set to: " + TileEngine.fps)
+      		var interval = 1000 / TileEngine.fps;
+      		TileEngine.gameTimer = setInterval(TileEngine.drawFrame, interval);
+      		TileEngine.fps_timer = setInterval(TileEngine.updateFPS, 2000);
+    	},
+    	updateFPS: function(){
+      		TileEngine.fps = TileEngine.fps_count / 2; // every two seconds cut the fps by 2
+      		TileEngine.fps_count = 0; // every two seconds cut the fps by 2
+    	},
     	isKeyBoardActive: function(){return TileEngine.active_controller == TileEngine.keyboard},
     	isMouseActive: function(){return TileEngine.active_controller == TileEngine.mouse},
 		setMapAttributes: function(obj){ //this function must be called prior to initializing tile engine
@@ -96,6 +103,7 @@ function newTileEngine(){
 			source.image.onload = function(){  //event handler for image load 
 				TileEngine.tileSource = TileEngine.createTileSource(obj.tileWidth, obj.tileHeight, obj.sourceTileCounts, obj.sourceTileAccross, obj.tile_offset_x || 0, obj.tile_offset_y || 0, source);	//create tile sources using image source		
 			}
+			TileEngine.createZones();  //create zones
 			TileEngine.createTiles(obj.tilesArray, obj.physicsArray);
 		},
 		setMainSpriteAttributes: function(obj){TileEngine.main_sprite = TileEngine.addSprite(obj, TileEngine.keyboard)},
@@ -125,34 +133,13 @@ function newTileEngine(){
 			}
 			TileEngine.active_controller ? TileEngine.active_controller.update():TileEngine.view.update();
 		},
-    	start: function(){
-      		Console.log("FPS limit set to: " + TileEngine.fps)
-      		var interval = 1000 / TileEngine.fps;
-      		TileEngine.gameTimer = setInterval(TileEngine.drawFrame, interval);
-      		TileEngine.fps_timer = setInterval(TileEngine.updateFPS, 2000);
-    	},
-    	updateFPS: function(){
-      		TileEngine.fps = TileEngine.fps_count / 2; // every two seconds cut the fps by 2
-      		TileEngine.fps_count = 0; // every two seconds cut the fps by 2
-    	},
 		drawFrame: function(){ //main drawing function
-			if(!TileEngine.initialized)//still loading
-				return
-			
 			//physics
 			TileEngine.integrator();
-			
 			//clear main canvas
-			TileEngine.ctx.clearRect(0,0,TileEngine.width, TileEngine.height);  
-      
+			TileEngine.ctx.clearRect(0, 0, TileEngine.width, TileEngine.height);  
 			//draw()
-      		if(TileEngine.zones)
-				TileEngine.render(TileEngine.view);
-			
-      		//do brightness of the screen
-			TileEngine.ctx.fillStyle = "rgba(0,0,0," + TileEngine.timeofDay+ ")";    
-			TileEngine.ctx.fillRect(0,0,TileEngine.width, TileEngine.height);
-      
+      		TileEngine.render(TileEngine.view);
       		TileEngine.fps_count++;  //increments frame for fps display
 		},
 		render: function(view){
@@ -162,7 +149,7 @@ function newTileEngine(){
 			while(i--){
 				var check_zone = TileEngine.zones[i];
 				if(view.isInView(check_zone)){
-					validZones.push(check_zone.forDecoration(view));
+					validZones.push(check_zone);
 					check_zone.drawTiles(view);
 					TileEngine.ctx.drawImage(check_zone.base_canvas, Math.round(check_zone.x-view.x), Math.round(check_zone.y-view.y));
 				} 
@@ -170,9 +157,8 @@ function newTileEngine(){
 			
 			//sprites
 			i = TileEngine.sprites.length
-			while(i--){
+			while(i--)
 				TileEngine.sprites[i].draw(view)
-			}
 			
 			//decorations
 			i = validZones.length;
@@ -181,31 +167,14 @@ function newTileEngine(){
 				check_zone.drawDecorations(view);
 				TileEngine.ctx.drawImage(check_zone.dec_canvas, check_zone.x-view.x, check_zone.y-view.y);
 			}
-		},
-		getCurrentViews: function(view){
-			var views = [view],
-					up = view.y < 0,
-					down = view.viewHeight > TileEngine.mapHeight
-			if(view.x < 0){
-				var v = view.left();
-				views.push(v);
-				if(up)views.push(v.up());
-				if(down)views.push(v.down());
-			}
-			if(view.viewWidth > TileEngine.mapWidth){
-				var v = view.right();
-				views.push(v);
-				if(up)views.push(v.up());
-				if(down)views.push(v.down());
-			}
-			if(up)views.push(view.up());
-			if(down)views.push(view.down());
-			return views;
+
+			//do brightness of the screen
+			TileEngine.ctx.fillStyle = "rgba(0, 0, 0," + TileEngine.timeofDay + ")";    
+			TileEngine.ctx.fillRect(0, 0, TileEngine.width, TileEngine.height);
 		},
 		createTileSource: function(tileWidth, tileHeight, count, accross, offset_x, offset_y, source){ //create tiles sources
 			if(TileEngine.tileSourcesHash[source.imageFilename])
 				return TileEngine.tileSourcesHash[source.imageFilename]
-
 
 			var source_array = new Array(),
 				accross_count = 0,x = 0,y = 0,
@@ -230,35 +199,62 @@ function newTileEngine(){
 			TileEngine.tileSourcesHash[source.imageFilename] = source_array;
 			return TileEngine.tileSourcesHash[source.imageFilename];
 		},
+
+		createTiles: function(tilesArray, physicsArray) { //load tile array
+			var tile_index = 0;  //track current position in tile array
+			var y_zone = 0; //used to determine which zone to add tile to
+			var x_zone = 0; //used to determine which zone to add tile to
+			var zone_index = 0; //track current position in zone array
+			var zone_wide = Math.ceil(TileEngine.tilesWide/TileEngine.zoneTilesWide); //how many zones are there horizontally
+			
+			function getX(index){return TileEngine.tileWidth * (index % TileEngine.tilesWide)}
+			function getY(index){return TileEngine.tileHeight * parseInt(index / TileEngine.tilesHigh)}
+
+			for(var h = 0, hh = TileEngine.tilesHigh; h < hh; h++)
+			{
+				y_zone = Math.floor(h/TileEngine.zoneTilesHigh); //calculate which vertical zone we are in
+				for(var i = 0, ii = TileEngine.tilesWide; i < ii; i++){ //cycle through each row
+					if(!TileEngine.tiles[i*TileEngine.tileWidth])//if this x array is not initialized yet
+						TileEngine.tiles[i*TileEngine.tileWidth] = new Array();
+
+					x_zone = Math.floor(i/TileEngine.zoneTilesWide);// calculate which horizontal zone we are in
+					var new_tile = newTile(); //create new tile object
+					//tile index x and y
+					new_tile.init(getX(tile_index), getY(tile_index), TileEngine.tileWidth, TileEngine.tileHeight, tilesArray[tile_index], physicsArray[tile_index]); //init tile
+					zone_index = (y_zone * zone_wide) + x_zone;//find what zone to add to using vert and horizontal positions
+					TileEngine.zones[zone_index].addTile(new_tile); //add tile to zone
+					tile_index++;
+				}
+				 x_zone = 0; //reset horizontal position when we loop to new row
+			}
+
+			Console.log("Tiles Ready");
+		},
 		createZones: function(){//create array of zones for map
-			TileEngine.zones = new Array();
 			//caluculate how many zones we need (width by height)
-			var zone_wide = Math.ceil(TileEngine.tilesWide/TileEngine.zoneTilesWide);
-			var zone_high = Math.ceil(TileEngine.tilesHigh/TileEngine.zoneTilesHigh);
+			var zone_wide = Math.ceil(TileEngine.tilesWide/TileEngine.zoneTilesWide),
+				zone_high = Math.ceil(TileEngine.tilesHigh/TileEngine.zoneTilesHigh);
 
 			/*these are used if tilemap is not evenly divisible by size of zones in tiles
 			**they are used to define the size of zones on the right and bottom edges of the
 			**map */
-			var x_remainder = TileEngine.tilesWide%TileEngine.zoneTilesWide;
-			var y_remainder = TileEngine.tilesHigh%TileEngine.zoneTilesHigh;
+			var x_remainder = TileEngine.tilesWide%TileEngine.zoneTilesWide,
+				y_remainder = TileEngine.tilesHigh%TileEngine.zoneTilesHigh;
 			
 			for(var h = 0; h < zone_high; h++){ //loop through zone rows
-				for(var i = 0; i < zone_wide; i++) //loop through zone columns
-				{
-					var new_zone = newZone(); //create new zone
-					
-					var x = i * TileEngine.zoneTilesWide * TileEngine.tileWidth //set x pos of new zone
-					var y = h * TileEngine.zoneTilesHigh * TileEngine.tileHeight //set y pos of new zone
-					
-					var width = TileEngine.zoneTilesWide * TileEngine.tileWidth; //set width of new zone
-					var tiles_wide = TileEngine.zoneTilesWide //set tiles wide for new zone
+				for(var i = 0; i < zone_wide; i++){ //loop through zone columns
+					var new_zone = newZone(), //create new zone
+						x = i * TileEngine.zoneTilesWide * TileEngine.tileWidth, //set x pos of new zone
+						y = h * TileEngine.zoneTilesHigh * TileEngine.tileHeight, //set y pos of new zone
+						width = TileEngine.zoneTilesWide * TileEngine.tileWidth, //set width of new zone
+						height = TileEngine.zoneTilesHigh * TileEngine.tileHeight, //set height of new zone
+						tiles_wide = TileEngine.zoneTilesWide, //set tiles wide for new zone
+						tiles_high = TileEngine.zoneTilesHigh; //set tiles high for new zone
+
 					if(i == (zone_wide - 1) && x_remainder > 0){  //if is last zone on horizontal row and tiles divide unevenly into zones
 						tiles_wide = x_remainder; //change new zone tiles wide to be correct
 						width = tiles_wide * TileEngine.tileWidth;  //change new zone width to be correct
 					}
-
-					var height = TileEngine.zoneTilesHigh * TileEngine.tileHeight; //set height of new zone
-					var tiles_high = TileEngine.zoneTilesHigh //set tiles high for new zone
 					if(h == (zone_high - 1) && y_remainder > 0){ //if last zones on bottom and tiles divide unevenly into zones
 						tiles_high = y_remainder; //adjust tiles high
 						height = tiles_high * TileEngine.tileHeight; //adjust zone height
@@ -267,35 +263,7 @@ function newTileEngine(){
 					new_zone.init(TileEngine, x, y, TileEngine.tileWidth, TileEngine.tileHeight, width, height); //intitialize new zone
 					TileEngine.zones.push(new_zone); //push zone to tile engine array
 				}
-			}
-			
-		},
-		createTiles: function(tilesArray, physicsArray) { //load tile array
-			TileEngine.createZones();  //create zones
-			var tile_index = 0;  //track current position in tile array
-			var y_zone = 0; //used to determine which zone to add tile to
-			var x_zone = 0; //used to determine which zone to add tile to
-			var zone_index = 0; //track current position in zone array
-			var zone_wide = Math.ceil(TileEngine.tilesWide/TileEngine.zoneTilesWide); //how many zones are there horizontally
-			for(var h = 0, hh = TileEngine.tilesHigh; h < hh; h++)
-			{
-				y_zone = Math.floor(h/TileEngine.zoneTilesHigh); //calculate which vertical zone we are in
-				for(var i = 0, ii = TileEngine.tilesWide; i < ii; i++){ //cycle through each row
-					
-					x_zone = Math.floor(i/TileEngine.zoneTilesWide);// calculate which horizontal zone we are in
-					var new_tile = newTile(); //create new tile object
-					new_tile.init(0, 0, TileEngine.tileWidth, TileEngine.tileHeight, tilesArray[tile_index], physicsArray[tile_index]); //init tile
-					zone_index = (y_zone * zone_wide) + x_zone;//find what zone to add to using vert and horizontal positions
-					TileEngine.zones[zone_index].addTile(new_tile); //add tile to zone
-					tile_index++;
-				}
-				 x_zone = 0; //reset horizontal position when we loop to new row
-			}
-			TileEngine.tiles = new Array();
-			for(var j = 0, jj = TileEngine.zones.length; j < jj; j++){
-				TileEngine.zones[j].arrangeTiles(TileEngine.tiles); //go throughh and arange x and y positions of tiles in zones
-			}
-			Console.log("Tiles Ready");
+			}	
 		}
 	}
 	
@@ -308,5 +276,3 @@ function newTileEngine(){
     	return false;
   	}
 };
-
-
